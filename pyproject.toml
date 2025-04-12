@@ -1,0 +1,15 @@
+[project]
+name="models"
+version="0.0.0"
+dependencies=[
+    # build123d <-> cadquery-ocp revlocked
+    # TODO: update build123d when a linux-aarch64 build of cadquery-ocp exists
+    "build123d==0.8.0",
+    "cadquery-ocp==7.7.2.1",
+    "click",
+    "ocp_tessellate",
+    "ocp_vscode",
+]
+
+[project.scripts]
+cad-models = "cad_models.cli:main"

@@ -1,0 +1,45 @@
+{
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bernhard-42.ocp-cad-viewer",
+        "esbenp.prettier-vscode",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "rohit-gohri.format-code-action"
+      ],
+      "settings": {
+        "launch": {
+          "configurations": [
+            {
+              "name": "python: current file",
+              "type": "debugpy",
+              "request": "launch",
+              "cwd": "${workspaceFolder}",
+              "program": "${file}"
+            }
+          ]
+        },
+        "editor.codeActionsOnSave": [
+          "source.unusedImports",
+          "source.organizeImports",
+          "source.formatDocument"
+        ],
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "isort.args": ["--profile", "black"],
+        "python.analysis.autoImportCompletions": true,
+        "python.defaultInterpreterPath": "/python/bin/python",
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter"
+        }
+      }
+    }
+  },
+  "image": "ubuntu:latest",
+  "postCreateCommand": ".devcontainer/post-create.sh",
+  "remoteEnv": {
+    "PATH": "/python/bin:${containerEnv:PATH}"
+  }
+}
