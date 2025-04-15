@@ -2,6 +2,7 @@
 name="models"
 version="0.0.0"
 dependencies=[
+    "bd_warehouse @ git+https://github.com/gumyr/bd_warehouse@18d0d5d09724f388bc5c6801f25dd8ebf2a945df",
     # build123d <-> cadquery-ocp revlocked
     # TODO: update build123d when a linux-aarch64 build of cadquery-ocp exists
     "build123d==0.8.0",
