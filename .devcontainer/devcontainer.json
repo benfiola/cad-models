@@ -18,7 +18,8 @@
               "type": "debugpy",
               "request": "launch",
               "cwd": "${workspaceFolder}",
-              "program": "${file}"
+              "program": "${file}",
+              "justMyCode": false
             }
           ]
         },
