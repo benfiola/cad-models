@@ -1,7 +1,7 @@
 import ocp_vscode
 from build123d import Compound
 
-from cad_models.compounds.keystone_receiver import KeystoneReceiver
+from cad_models.solids.keystone_receiver import KeystoneReceiver
 
 
 def create() -> Compound:

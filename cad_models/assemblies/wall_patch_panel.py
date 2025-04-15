@@ -21,7 +21,7 @@ from build123d import (
     extrude,
 )
 
-from cad_models.compounds.keystone_receiver import KeystoneReceiver
+from cad_models.solids.keystone_receiver import KeystoneReceiver
 
 
 class Panel(Solid):
