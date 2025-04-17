@@ -8,6 +8,7 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Compound,
+    FontStyle,
     GridLocations,
     Joint,
     Location,
@@ -125,7 +126,11 @@ class Panel(Solid):
                         )
                     )
                     with Locations(text_location):
-                        Text(text, font_size=keystone_text_size)
+                        Text(
+                            text,
+                            font_size=keystone_text_size,
+                            font_style=FontStyle.BOLD,
+                        )
             extrude(amount=-keystone_text_depth, mode=Mode.SUBTRACT)
 
             # create keystone cutouts
@@ -155,10 +160,10 @@ class Panel(Solid):
 def create() -> Compound:
     keystone_count = (3, 3)
     panel = Panel(
-        corner_radius=3.0 * MM,
+        corner_radius=4.0 * MM,
         dimensions=(250.0 * MM, 100.0 * MM, 4.0 * MM),
         keystone_count=keystone_count,
-        keystone_grid_dimensions=(80 * MM, 100.0 * MM),
+        keystone_grid_dimensions=(64 * MM, 100.0 * MM),
         keystone_text=[
             "br1-1",
             "br2-2",
@@ -171,8 +176,8 @@ def create() -> Compound:
             "o-2",
         ],
         keystone_text_depth=1.0 * MM,
-        keystone_text_size=4.0 * MM,
-        mount_hole_dimensions=Vector(12.0 * MM, 8.0 * MM),
+        keystone_text_size=5.0 * MM,
+        mount_hole_dimensions=Vector(12.0 * MM, 6.0 * MM),
         mount_hole_offset=Vector(1.0 * MM, 3.0 * MM),
         label="panel",
     )
