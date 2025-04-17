@@ -8,17 +8,15 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Compound,
-    FontStyle,
     GridLocations,
     Joint,
     Location,
-    Locations,
     Mode,
     Rectangle,
     RigidJoint,
     SlotOverall,
     Solid,
-    Text,
+    SortBy,
     Vector,
     VectorLike,
     extrude,
@@ -67,94 +65,52 @@ class Panel(Solid):
         if isinstance(mount_hole_offset, Iterable):
             mount_hole_offset = Vector(*mount_hole_offset)
 
-        # calculate keystone spacing
-        keystone_size = base_keystone.bounding_box().size
-        keystones_size = Vector(
-            keystone_size.X * keystone_count[0],
-            keystone_size.Y * keystone_count[1],
-        )
-        keystone_spacing = Vector(
-            (keystone_grid_dimensions.X - keystones_size.X) / (keystone_count[0] + 1),
-            (keystone_grid_dimensions.Y - keystones_size.Y) / (keystone_count[1] + 1),
-        )
-
-        with BuildPart() as panel:
-            # create panel
+        with BuildPart() as builder:
             with BuildSketch():
+                # create panel
                 Rectangle(dimensions.X, dimensions.Y)
-            base_panel = extrude(amount=dimensions.Z)
-            panel_front = base_panel.faces().sort_by(Axis.Z)[0]
 
-            # create mount holes
-            with BuildSketch(panel_front):
-                with GridLocations(
-                    (
-                        panel_front.length
-                        - (mount_hole_dimensions.X + mount_hole_offset.X)
-                    ),
-                    (
-                        panel_front.width
-                        - (mount_hole_dimensions.Y + mount_hole_offset.Y)
-                    ),
-                    2,
-                    2,
-                ):
-                    SlotOverall(
-                        width=mount_hole_dimensions.X, height=mount_hole_dimensions.Y
-                    )
-            extrude(amount=-dimensions.Z, mode=Mode.SUBTRACT)
-
-            # create keystone labels
-            with BuildSketch(panel_front) as sketch:
-                grid_locations = GridLocations(
-                    keystone_size.X + keystone_spacing.X,
-                    keystone_size.Y + keystone_spacing.Y,
-                    *keystone_count,
+                # create mount holes
+                spacing = (
+                    dimensions.X - (mount_hole_dimensions.X + mount_hole_offset.X),
+                    dimensions.Y - (mount_hole_dimensions.Y + mount_hole_offset.Y),
                 )
-                for index, location in enumerate(grid_locations.locations):
-                    text = keystone_text[index]
-                    if text is None:
-                        continue
-                    text_location = Location(
-                        (
-                            location.position.X,
-                            (
-                                location.position.Y
-                                + ((keystone_size.Y + keystone_spacing.Y) / 2)
-                            ),
-                            location.position.Z,
-                        )
-                    )
-                    with Locations(text_location):
-                        Text(
-                            text,
-                            font_size=keystone_text_size,
-                            font_style=FontStyle.BOLD,
-                        )
-            extrude(amount=-keystone_text_depth, mode=Mode.SUBTRACT)
+                with GridLocations(*spacing, 2, 2):
+                    SlotOverall(*mount_hole_dimensions.to_tuple(), mode=Mode.SUBTRACT)
 
-            # create keystone cutouts
-            with BuildSketch(panel_front):
-                with GridLocations(
-                    keystone_size.X + keystone_spacing.X,
-                    keystone_size.Y + keystone_spacing.Y,
-                    *keystone_count,
-                ):
-                    Rectangle(keystone_size.X, keystone_size.Y)
-            cutouts = extrude(amount=-dimensions.Z, mode=Mode.SUBTRACT)
+                # create keystone cutouts
+                size = base_keystone.bounding_box().size
+                min_grid_size = Vector(
+                    size.X * keystone_count[0], size.Y * keystone_count[1]
+                )
+                extra_space = Vector(
+                    (keystone_grid_dimensions.X - min_grid_size.X)
+                    / (keystone_count[0] + 1),
+                    (keystone_grid_dimensions.Y - min_grid_size.Y)
+                    / (keystone_count[1] + 1),
+                )
+                spacing = (
+                    size.X + extra_space.X,
+                    size.Y + extra_space.Y,
+                )
+                with GridLocations(*spacing, *keystone_count) as keystone_locations:
+                    Rectangle(size.X, size.Y, mode=Mode.SUBTRACT)
+            extrude(amount=dimensions.Z)
 
-            # create joints from cutout faces
-            total_keystones = keystone_count[0] * keystone_count[1]
-            cutout_faces = cutouts.faces().sort_by(Axis.Z)[:total_keystones]
-            for index, face in enumerate(cutout_faces):
-                joint_location = Location(face.center_location.position)
-                RigidJoint(f"keystone-cutout-{index}", joint_location=joint_location)
+            def row_order(location: Location):
+                pos = location.position.to_tuple()
+                return pos[1], pos[0]
+
+            for index, location in enumerate(sorted(keystone_locations, key=row_order)):
+                x = int(index / keystone_count[1])
+                y = index % keystone_count[1]
+                RigidJoint(f"keystone-cutout-{x}-{y}", joint_location=location)
 
             # fillet corners
-            corners = base_panel.edges().filter_by(Axis.Z)
+            corners = builder.edges().filter_by(Axis.Z).sort_by(SortBy.DISTANCE)[-4:]
             fillet(corners, radius=corner_radius)
 
-        super().__init__(panel.part.wrapped, joints=panel.joints, label=label)
+        super().__init__(builder.part.wrapped, joints=builder.joints, label=label)
 
 
 def create() -> Compound:
@@ -182,19 +138,19 @@ def create() -> Compound:
         label="panel",
     )
 
-    # keystones
     base_keystone = KeystoneReceiver()
     keystones: list[KeystoneReceiver] = []
-    for _ in range(0, keystone_count[0] * keystone_count[1]):
-        keystone = copy(base_keystone)
-        keystone.label = f"keystone-{len(keystones)}"
-        keystones.append(keystone)
+    for x in range(0, keystone_count[0]):
+        for y in range(0, keystone_count[1]):
+            # create keystone
+            keystone = copy(base_keystone)
+            keystone.label = f"keystone-{x}-{y}"
+            keystones.append(keystone)
 
-    # connect keystones <-> panel cutouts
-    for index, keystone in enumerate(keystones):
-        keystone_joint: Joint = keystone.joints["keystone"]
-        cutout_joint: Joint = panel.joints[f"keystone-cutout-{index}"]
-        cutout_joint.connect_to(keystone_joint)
+            # attach keystone to panel
+            keystone_joint: Joint = keystone.joints["keystone"]
+            cutout_joint: Joint = panel.joints[f"keystone-cutout-{x}-{y}"]
+            cutout_joint.connect_to(keystone_joint)
 
     return Compound([], children=[panel, *keystones])
 
