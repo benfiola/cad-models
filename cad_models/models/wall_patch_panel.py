@@ -10,7 +10,6 @@ from build123d import (
     Compound,
     FontStyle,
     GridLocations,
-    Joint,
     Location,
     Locations,
     Mode,
@@ -22,6 +21,7 @@ from build123d import (
     Text,
     Vector,
     VectorLike,
+    add,
     extrude,
     fillet,
 )
@@ -37,7 +37,7 @@ class Panel(Solid):
         dimensions: VectorLike,
         keystone_count: tuple[int, int],
         keystone_grid_dimensions: VectorLike,
-        keystone_text: list[str | None],
+        keystone_text: list[list[str | None]],
         keystone_text_depth: float,
         keystone_text_size: float,
         keystone_text_style: FontStyle,
@@ -79,7 +79,8 @@ class Panel(Solid):
                 Rectangle(dimensions.X, dimensions.Y)
 
                 # create mount holes
-                spacing = dimensions.sub(mount_hole_dimensions.add(mount_hole_offset))
+                offset = 2 * Vector(mount_hole_offset)
+                spacing = dimensions.sub(mount_hole_dimensions.add(offset))
                 spacing = spacing.to_tuple()[:2]
                 with GridLocations(*spacing, 2, 2):
                     SlotOverall(*mount_hole_dimensions.to_tuple(), mode=Mode.SUBTRACT)
@@ -120,16 +121,16 @@ class Panel(Solid):
                 keystones.append(keystone)
 
                 # attach keystone
-                keystone_joint: Joint = keystone.joints["keystone"]
+                keystone_joint: RigidJoint = keystone.joints["keystone"]
                 cutout_joint.connect_to(keystone_joint)
-                builder.part = builder.part.fuse(keystone)
+                add(keystone)
 
             # create labels
             front = builder.faces().sort_by(SortBy.AREA)[-2:].sort_by(Axis.Y)[0]
             with BuildSketch(front) as sketch:
                 for x, y_labels in enumerate(keystone_text):
-                    for y, label in enumerate(y_labels):
-                        if label is None:
+                    for y, ks_label in enumerate(y_labels):
+                        if ks_label is None:
                             continue
                         original = builder.joints[
                             f"keystone-cutout-{x}-{y}"
@@ -137,7 +138,7 @@ class Panel(Solid):
                         location = original.add((0, -keystone_size.Y / 2, 0))
                         with Locations(location):
                             Text(
-                                label,
+                                ks_label,
                                 font_size=keystone_text_size,
                                 font_style=keystone_text_style,
                             )
@@ -153,7 +154,7 @@ class Panel(Solid):
 class Model(Compound):
     def __init__(self):
         panel = Panel(
-            corner_radius=4.0 * MM,
+            corner_radius=3.0 * MM,
             dimensions=(250.0 * MM, 90.0 * MM, 4.0 * MM),
             keystone_count=(3, 3),
             keystone_grid_dimensions=(68.0 * MM, 82.0 * MM),
@@ -162,11 +163,11 @@ class Model(Compound):
                 ["br2-2", None, "lr-1"],
                 ["lr-2", "o-1", "o-2"],
             ],
-            keystone_text_depth=1.0 * MM,
+            keystone_text_depth=0.5 * MM,
             keystone_text_size=6.0 * MM,
             keystone_text_style=FontStyle.BOLD,
-            mount_hole_dimensions=Vector(18.0 * MM, 9.0 * MM),
-            mount_hole_offset=Vector(2.0 * MM, 0.0 * MM),
+            mount_hole_dimensions=Vector(12.0 * MM, 6.0 * MM),
+            mount_hole_offset=Vector(3.0 * MM, 3.0 * MM),
             label="panel",
         )
         super().__init__([], children=[panel])
