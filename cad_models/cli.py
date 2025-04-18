@@ -25,7 +25,9 @@ def cmd_export_model(model_name: str, format: str | None, output_file: str | Non
     model = import_model(model_name)
 
     if not output_file.exists():
-        output_file.mkdir(parents=True, exist_ok=True)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+    if output_file.exists():
+        output_file.unlink()
 
     if format == "stl":
         export_stl(model, output_file)
