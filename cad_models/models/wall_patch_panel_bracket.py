@@ -48,15 +48,16 @@ class Bracket(Solid):
         super().__init__(part.wrapped, label=label)
 
 
-def create() -> Compound:
-    bracket = Bracket(
-        arm_dimensions=Vector(10 * MM, 10 * MM, 80 * MM),
-        dimensions=Vector(10 * MM, 100 * MM, 10.0 * MM),
-        mount_hole_offset=Vector(2.0 * MM, 2.0 * MM),
-        label="bracket",
-    )
-    return Compound([], children=[bracket])
+class Model(Compound):
+    def __init__(self):
+        bracket = Bracket(
+            arm_dimensions=Vector(10 * MM, 10 * MM, 80 * MM),
+            dimensions=Vector(10 * MM, 100 * MM, 10.0 * MM),
+            mount_hole_offset=Vector(2.0 * MM, 2.0 * MM),
+            label="bracket",
+        )
+        return super().__init__([], children=[bracket])
 
 
 if __name__ == "__main__":
-    ocp_vscode.show_object(create())
+    ocp_vscode.show_object(Model())

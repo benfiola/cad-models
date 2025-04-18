@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from build123d import Axis, Location, RigidJoint, Solid, import_step
+import ocp_vscode
+from build123d import Axis, Compound, Location, RigidJoint, Solid, import_step
 
 step_file = Path(__file__).parent.joinpath("keystone_receiver.step")
 
@@ -15,3 +16,13 @@ class KeystoneReceiver(Solid):
             joint_location=Location(front_face.center_location.position),
         )
         super().__init__(solid.wrapped, joints={joint.label: joint}, label=label)
+
+
+class Model(Compound):
+    def __init__(self):
+        receiver = KeystoneReceiver()
+        super().__init__([], children=[receiver])
+
+
+if __name__ == "__main__":
+    ocp_vscode.show_object(Model())
