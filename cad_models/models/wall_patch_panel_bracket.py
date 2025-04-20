@@ -97,7 +97,7 @@ class Model(Compound):
     def __init__(self):
         bracket = Bracket(
             # bracket screw is #7 screw
-            bracket_screw_diameter=0.180 * IN,
+            bracket_screw_diameter=0.182 * IN,
             bracket_screw_head_dimensions=Vector(0.325 * IN, 0 * MM, 0.16 * IN),
             dimensions=Vector(18.0 * MM, 90.0 * MM, 10.0 * MM),
             label="bracket",
@@ -105,7 +105,7 @@ class Model(Compound):
             # mount screw/nut is #10-32
             mount_nut_dimensions=Vector(0.390 * IN, 0.390 * IN, 0.140 * IN),
             mount_nut_offset=2.0 * MM,
-            mount_screw_dimensions=Vector(0.210 * IN, 0 * MM, 0.75 * IN),
+            mount_screw_dimensions=Vector(0.206 * IN, 0 * MM, 0.75 * IN),
         )
 
         return super().__init__([], children=[bracket])
