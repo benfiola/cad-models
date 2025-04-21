@@ -98,12 +98,12 @@ class Model(Compound):
         bracket = Bracket(
             # bracket screw is #7 screw
             bracket_screw_diameter=0.182 * IN,
-            bracket_screw_head_dimensions=Vector(0.326 * IN, 0 * MM, 0.10 * IN),
+            bracket_screw_head_dimensions=Vector(0.326 * IN, 0 * MM, 0.12 * IN),
             dimensions=Vector(18.0 * MM, 90.0 * MM, 10.0 * MM),
             label="bracket",
             mount_arm_dimensions=Vector(0.0 * MM, 12.0 * MM, 40.0 * MM),
             # mount screw/nut is #10-32
-            mount_nut_dimensions=Vector(0.388 * IN, 0.388 * IN, 0.12 * IN),
+            mount_nut_dimensions=Vector(0.390 * IN, 0.390 * IN, 0.14 * IN),
             mount_nut_offset=4.0 * MM,
             mount_screw_dimensions=Vector(0.206 * IN, 0 * MM, 0.75 * IN),
         )
