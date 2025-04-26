@@ -23,7 +23,7 @@ class Iso:
     SlotWidth: Literal["n"] = "n"
 
 
-class WallAnchorScrew(PanHeadScrew):
+class WallScrew(PanHeadScrew):
     cm_size = "0.151-16"
     cm_diameter = cm_size.split("-")[0]
 
@@ -49,12 +49,7 @@ class WallAnchorScrew(PanHeadScrew):
         super().__init__(**kwargs)
 
 
-class WallAnchorNut(HexNut):
-    def __init__(self):
-        pass
-
-
-class ServerRackScrew(Screw):
+class RackMountScrew(Screw):
     cm_size = "#10-32"
 
     countersink_profile = Screw.default_countersink_profile
@@ -91,7 +86,7 @@ class ServerRackScrew(Screw):
         return profile.sketch.face()
 
 
-class ServerRackNut(HexNut):
+class RackMountNut(HexNut):
     cm_size = "#10-32"
 
     fastener_data = {
@@ -104,4 +99,17 @@ class ServerRackNut(HexNut):
     def __init__(self, **kwargs):
         kwargs["size"] = self.cm_size
         kwargs["fastener_type"] = "asme_b_18.2.2"
+        super().__init__(**kwargs)
+
+
+class RackInterfaceScrew(PanHeadScrew):
+    def __init__(self, **kwargs):
+        kwargs["size"] = "M5-0.8"
+        kwargs.setdefault("length", 8 * MM)
+        super().__init__(**kwargs)
+
+
+class RackInterfaceNut(HexNut):
+    def __init__(self, **kwargs):
+        kwargs["size"] = "M5-0.8"
         super().__init__(**kwargs)
