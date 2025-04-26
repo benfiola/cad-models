@@ -41,6 +41,7 @@
   "image": "ubuntu:latest",
   "postCreateCommand": ".devcontainer/post-create.sh",
   "remoteEnv": {
-    "PATH": "/python/bin:${containerEnv:PATH}"
+    "PATH": "/python/bin:${containerEnv:PATH}",
+    "PYTHONDONTWRITEBYTECODE": "1"
   }
 }
