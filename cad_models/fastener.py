@@ -1,6 +1,6 @@
 from typing import Literal
 
-from bd_warehouse.fastener import Screw
+from bd_warehouse.fastener import PanHeadScrew, Screw
 from build123d import (
     IN,
     MM,
@@ -22,6 +22,35 @@ class Iso:
     HeadRadius: Literal["rf"] = "rf"
     SlotDepth: Literal["t"] = "t"
     SlotWidth: Literal["n"] = "n"
+
+
+class WallAnchorScrew(PanHeadScrew):
+    countersink_profile = Screw.default_countersink_profile
+    # #7 isn't listed in bd_warehouses known imperial sizes - use inches for diameter
+    fastener_data = {
+        "0.151-16": {
+            f"asme_b_18.6.3:{Iso.HeadDiameter}": "0.296",
+            f"asme_b_18.6.3:{Iso.HeadHeight}": "0.089",
+            f"asme_b_18.6.3:{Iso.HeadRadius}": "0.049",
+            f"asme_b_18.6.3:{Iso.SlotDepth}": "0.054",
+            f"asme_b_18.6.3:{Iso.SlotWidth}": "0.048",
+        },
+    }
+    clearance_hole_data = {
+        "0.151": {"Close": 0.168 * IN, "Normal": 0.190 * IN, "Loose": 0.205 * IN}
+    }
+
+    def __init__(self):
+        super().__init__(
+            size="0.151-16",
+            length=1.125 * IN,
+            fastener_type="asme_b_18.6.3",
+            hand="right",
+            simple=False,
+            rotation=(0, 0, 0),
+            align=None,
+            mode=Mode.ADD,
+        )
 
 
 class ServerRackScrew(Screw):
