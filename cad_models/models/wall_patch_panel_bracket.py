@@ -1,17 +1,19 @@
 from collections.abc import Iterable
 
 import ocp_vscode
+from bd_warehouse.fastener import ClearanceHole, Nut, Screw
 from build123d import (
-    IN,
     MM,
+    Align,
     Axis,
+    Box,
     BuildPart,
     BuildSketch,
-    Circle,
     Compound,
     GridLocations,
     Locations,
     Mode,
+    Pos,
     Rectangle,
     Solid,
     Vector,
@@ -19,29 +21,40 @@ from build123d import (
     extrude,
 )
 
+from cad_models.common import (
+    RackMountNut,
+    RackMountScrew,
+    WallScrew,
+    captive_nut_slot_dimensions,
+)
+
 
 class Bracket(Solid):
     def __init__(
         self,
         *,
-        bracket_screw_diameter: float,
-        bracket_screw_head_dimensions: VectorLike,
+        bracket_screw: Screw,
         dimensions: VectorLike,
         label: str = "",
         mount_arm_dimensions: VectorLike,
-        mount_nut_dimensions: VectorLike,
+        mount_nut: Nut,
         mount_nut_offset: float,
-        mount_screw_dimensions: VectorLike
+        mount_screw: Screw,
     ):
+        """
+        :param bracket_screw: the screw securing the bracket to the wall
+        :param dimensions: the dimensions of the bracket base
+        :param label: the label for the produced solid
+        :param mount_arm_dimensions: the dimensions of the arms extending from the bracket base.  the depth of the arms is in addition to the depth of the bracket base
+        :param mount_nut: the captive nut used to secure the mount screw to the bracket
+        :param mount_nut_offset: the distance from the edge of the mount arm to place the mount captive nut slot
+        :param mount_screw: the screw securing the 'other' object to the bracket
+        """
         # convert vectorlikes
-        if isinstance(bracket_screw_head_dimensions, Iterable):
-            bracket_screw_head_dimensions = Vector(bracket_screw_head_dimensions)
+        if isinstance(dimensions, Iterable):
+            dimensions = Vector(dimensions)
         if isinstance(mount_arm_dimensions, Iterable):
             mount_arm_dimensions = Vector(mount_arm_dimensions)
-        if isinstance(mount_nut_dimensions, Iterable):
-            mount_nut_dimensions = Vector(mount_nut_dimensions)
-        if isinstance(mount_screw_dimensions, Iterable):
-            mount_screw_dimensions = Vector(mount_screw_dimensions)
 
         with BuildPart() as builder:
             # create the base
@@ -51,12 +64,8 @@ class Bracket(Solid):
             front_face = builder.faces().sort_by(Axis.Z)[-1]
 
             # create the bracket hole
-            with BuildSketch(front_face):
-                Circle(radius=bracket_screw_diameter / 2)
-            extrude(amount=-dimensions.Z, mode=Mode.SUBTRACT)
-            with BuildSketch(front_face):
-                Circle(radius=bracket_screw_head_dimensions.X / 2)
-            extrude(amount=-bracket_screw_head_dimensions.Z, mode=Mode.SUBTRACT)
+            with Locations(front_face.location):
+                ClearanceHole(bracket_screw)
 
             # create mount arms
             with BuildSketch(front_face):
@@ -65,30 +74,28 @@ class Bracket(Solid):
                     Rectangle(dimensions.X, mount_arm_dimensions.Y)
             arms = extrude(amount=mount_arm_dimensions.Z)
 
-            # create mount screw hole
             front_faces = arms.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-2:]
             for front_face in front_faces:
-                with BuildSketch(front_face):
-                    Circle(radius=mount_screw_dimensions.X / 2)
-                extrude(amount=-mount_screw_dimensions.Z, mode=Mode.SUBTRACT)
-
-            # create mount nut slot
-            top_faces = arms.faces().filter_by(Axis.Y).sort_by(Axis.Y)[1::2]
-            for top_face in top_faces:
-                with BuildSketch(top_face) as sketch:
-                    location = (
-                        0.0,
-                        (-top_face.width / 2)
-                        + mount_nut_offset
-                        + (mount_nut_dimensions.Z / 2),
+                # create mount screw hole
+                with Locations(front_face.location):
+                    ClearanceHole(
+                        mount_screw, depth=mount_screw.length, counter_sunk=False
                     )
-                    with Locations(location) as location:
-                        Rectangle(mount_nut_dimensions.X, mount_nut_dimensions.Z)
-                # ensure mount slot is centered with screw
-                arm_center = mount_arm_dimensions.Y / 2
-                nut_center = mount_nut_dimensions.Y / 2
-                depth = mount_nut_dimensions.Y + (arm_center - nut_center)
-                extrude(amount=-depth, mode=Mode.SUBTRACT)
+
+                # create mount nut slot
+                top = front_face.location * Pos(
+                    Y=front_face.width / 2, Z=-mount_nut_offset
+                )
+                slot_dimensions = captive_nut_slot_dimensions(mount_nut)
+                offset = (front_face.width - mount_nut.nut_diameter) / 2
+                with Locations(top):
+                    Box(
+                        width=slot_dimensions.X,
+                        length=slot_dimensions.Y + offset,
+                        height=mount_nut.nut_thickness,
+                        mode=Mode.SUBTRACT,
+                        align=(Align.CENTER, Align.MAX, Align.MAX),
+                    )
 
         super().__init__(builder.part.wrapped, label=label)
 
@@ -96,16 +103,13 @@ class Bracket(Solid):
 class Model(Compound):
     def __init__(self):
         bracket = Bracket(
-            # bracket screw is #7 screw
-            bracket_screw_diameter=0.182 * IN,
-            bracket_screw_head_dimensions=Vector(0.326 * IN, 0 * MM, 0.12 * IN),
+            bracket_screw=WallScrew(),
             dimensions=Vector(18.0 * MM, 90.0 * MM, 10.0 * MM),
             label="bracket",
             mount_arm_dimensions=Vector(0.0 * MM, 12.0 * MM, 90.0 * MM),
-            # mount screw/nut is #10-32
-            mount_nut_dimensions=Vector(0.390 * IN, 0.390 * IN, 0.14 * IN),
+            mount_nut=RackMountNut(),
             mount_nut_offset=4.0 * MM,
-            mount_screw_dimensions=Vector(0.206 * IN, 0 * MM, 0.75 * IN),
+            mount_screw=RackMountScrew(),
         )
 
         return super().__init__([], children=[bracket])

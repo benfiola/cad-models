@@ -1,6 +1,7 @@
-from typing import Literal
+import math
+from typing import Any, Literal
 
-from bd_warehouse.fastener import HexNut, PanHeadScrew, Screw
+from bd_warehouse.fastener import HexNut, Nut, PanHeadScrew, Screw
 from build123d import (
     IN,
     MM,
@@ -11,6 +12,7 @@ from build123d import (
     Plane,
     Polyline,
     RadiusArc,
+    Vector,
     make_face,
 )
 
@@ -19,11 +21,17 @@ class Iso:
     HeadDiameter: Literal["dk"] = "dk"
     HeadHeight: Literal["k"] = "k"
     HeadRadius: Literal["rf"] = "rf"
+    NutWidth: Literal["s"] = "s"
+    NutHeight: Literal["m"] = "m"
     SlotDepth: Literal["t"] = "t"
     SlotWidth: Literal["n"] = "n"
 
 
 class WallScrew(PanHeadScrew):
+    """
+    Screw used in conjunction with wall anchors to secure an assembly to the wall.
+    """
+
     cm_size = "0.151-16"
     cm_diameter = cm_size.split("-")[0]
 
@@ -31,11 +39,11 @@ class WallScrew(PanHeadScrew):
     # #7 isn't listed in bd_warehouses known imperial sizes - use inches for diameter
     fastener_data = {
         f"{cm_size}": {
-            f"asme_b_18.6.3:{Iso.HeadDiameter}": "0.296",
-            f"asme_b_18.6.3:{Iso.HeadHeight}": "0.089",
-            f"asme_b_18.6.3:{Iso.HeadRadius}": "0.049",
-            f"asme_b_18.6.3:{Iso.SlotDepth}": "0.054",
-            f"asme_b_18.6.3:{Iso.SlotWidth}": "0.048",
+            f"custom:{Iso.HeadDiameter}": "0.311",
+            f"custom:{Iso.HeadHeight}": "0.089",
+            f"custom:{Iso.HeadRadius}": "0.049",
+            f"custom:{Iso.SlotDepth}": "0.054",
+            f"custom:{Iso.SlotWidth}": "0.048",
         },
     }
     clearance_hole_data = {
@@ -45,21 +53,25 @@ class WallScrew(PanHeadScrew):
     def __init__(self, **kwargs):
         kwargs["size"] = self.cm_size
         kwargs["length"] = 1.125 * IN
-        kwargs["fastener_type"] = "asme_b_18.6.3"
+        kwargs["fastener_type"] = "custom"
         super().__init__(**kwargs)
 
 
 class RackMountScrew(Screw):
+    """
+    Screw used to secure a rack-mounted assembly to the rack mount itself
+    """
+
     cm_size = "#10-32"
 
     countersink_profile = Screw.default_countersink_profile
-    fastener_data = {
+    fastener_data: Any = {
         cm_size: {
-            f"asme_b_18.6.3:{Iso.HeadDiameter}": "0.456",
-            f"asme_b_18.6.3:{Iso.HeadHeight}": "0.132",
-            f"asme_b_18.6.3:{Iso.HeadRadius}": "0.283",
-            f"asme_b_18.6.3:{Iso.SlotDepth}": "0.068",
-            f"asme_b_18.6.3:{Iso.SlotWidth}": "0.070",
+            f"custom:{Iso.HeadDiameter}": "0.456",
+            f"custom:{Iso.HeadHeight}": "0.132",
+            f"custom:{Iso.HeadRadius}": "0.283",
+            f"custom:{Iso.SlotDepth}": "0.068",
+            f"custom:{Iso.SlotWidth}": "0.070",
         }
     }
     head_recess = Screw.default_head_recess
@@ -67,7 +79,7 @@ class RackMountScrew(Screw):
     def __init__(self, **kwargs):
         kwargs["size"] = self.cm_size
         kwargs["length"] = (5 / 8 * IN) + (1.6 * MM)
-        kwargs["fastener_type"] = "asme_b_18.6.3"
+        kwargs["fastener_type"] = "custom"
         super().__init__(**kwargs)
 
     def head_profile(self) -> Face:
@@ -87,22 +99,30 @@ class RackMountScrew(Screw):
 
 
 class RackMountNut(HexNut):
+    """
+    Nut used to secure a rack-mounted assembly to the rack mount itself
+    """
+
     cm_size = "#10-32"
 
     fastener_data = {
         cm_size: {
-            f"asme_b_18.2.2:s": "0.375",
-            f"asme_b_18.2.2:m": "0.130",
+            f"custom:{Iso.NutWidth}": "0.375",
+            f"custom:{Iso.NutHeight}": "0.130",
         }
     }
 
     def __init__(self, **kwargs):
         kwargs["size"] = self.cm_size
-        kwargs["fastener_type"] = "asme_b_18.2.2"
+        kwargs["fastener_type"] = "custom"
         super().__init__(**kwargs)
 
 
 class RackInterfaceScrew(PanHeadScrew):
+    """
+    Screw used to secure the various parts of a rack-mounted assembly.
+    """
+
     def __init__(self, **kwargs):
         kwargs["size"] = "M5-0.8"
         kwargs.setdefault("length", 8 * MM)
@@ -110,6 +130,32 @@ class RackInterfaceScrew(PanHeadScrew):
 
 
 class RackInterfaceNut(HexNut):
+    """
+    Nut used to secure the various parts of a rack-mounted assembly.
+    """
+
+    cm_size = "M5-0.8"
+
+    fastener_data = {
+        cm_size: {f"custom:{Iso.NutHeight}": "3.900", f"custom:{Iso.NutWidth}": "8.000"}
+    }
+
     def __init__(self, **kwargs):
         kwargs["size"] = "M5-0.8"
+        kwargs["fastener_type"] = "custom"
         super().__init__(**kwargs)
+
+
+def captive_nut_slot_dimensions(
+    nut: Nut, fit: Literal["Close"] | Literal["Normal"] | Literal["Loose"] = "Normal"
+) -> Vector:
+    """
+    Snippet taken from bd_warehouse.fasteners._make_fastener_hole.
+
+    Calculates and returns the width and height of a captive nut slot - which is effectively the width and height of a nut's clearance hole.
+    """
+    clearance = nut.clearance_hole_diameters[fit] - nut.thread_diameter
+    if isinstance(nut, HexNut):
+        rect_width = nut.nut_diameter + clearance
+        rect_height = nut.nut_diameter * math.sin(math.pi / 3) + clearance
+    return Vector(X=rect_width, Y=rect_height)
