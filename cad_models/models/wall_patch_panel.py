@@ -26,7 +26,9 @@ from build123d import (
     fillet,
 )
 
+from cad_models.common import RackMountNut, RackMountScrew, WallScrew
 from cad_models.models.keystone_receiver import KeystoneReceiver
+from cad_models.models.wall_patch_panel_bracket import Bracket
 
 
 class Panel(Solid):
@@ -82,7 +84,7 @@ class Panel(Solid):
                 offset = 2 * Vector(mount_hole_offset)
                 spacing = dimensions.sub(mount_hole_dimensions.add(offset))
                 spacing = spacing.to_tuple()[:2]
-                with GridLocations(*spacing, 2, 2):
+                with GridLocations(*spacing, 2, 2) as mount_hole_grid_locations:
                     SlotOverall(*mount_hole_dimensions.to_tuple(), mode=Mode.SUBTRACT)
 
                 # create keystone cutouts
@@ -99,16 +101,33 @@ class Panel(Solid):
                     *spacing, *keystone_count
                 ) as keystone_grid_locations:
                     Rectangle(size.X, size.Y, mode=Mode.SUBTRACT)
+
             extrude(amount=dimensions.Z)
+
+            def col_order(loc: Location):
+                pos = loc.to_tuple()
+                return pos
 
             def row_order(location: Location):
                 pos = location.position.to_tuple()
                 return -pos[1], pos[0]
 
+            # create mount hole joint
+            locations = list(sorted(mount_hole_grid_locations.locations, key=col_order))
+            locations = zip(locations[0::2], locations[1::2])
+            for index, (top, bottom) in enumerate(locations):
+                top.position += (0.0, 0.0, dimensions.Z)
+                bottom.position += (0.0, 0.0, dimensions.Z)
+                top.orientation += (180.0, 0.0, 0.0)
+                bottom.orientation += (180.0, 0.0, 0.0)
+                RigidJoint(f"mount-hole-{index}-top", joint_location=top)
+                RigidJoint(f"mount-hole-{index}-bottom", joint_location=bottom)
+
             keystones: list[KeystoneReceiver] = []
             for index, location in enumerate(
                 sorted(keystone_grid_locations, key=row_order)
             ):
+                # create keystone cutout joint
                 x = int(index / keystone_count[1])
                 y = index % keystone_count[1]
                 cutout_joint = RigidJoint(
@@ -120,7 +139,7 @@ class Panel(Solid):
                 keystone.label = f"keystone-{x}-{y}"
                 keystones.append(keystone)
 
-                # attach keystone
+                # attach keystone to joint
                 keystone_joint: RigidJoint = keystone.joints["keystone"]
                 cutout_joint.connect_to(keystone_joint)
                 add(keystone)
@@ -170,7 +189,29 @@ class Model(Compound):
             mount_hole_offset=(3.0 * MM, 3.0 * MM),
             label="panel",
         )
-        super().__init__([], children=[panel], label=f"wall-patch-panel")
+
+        brackets = []
+        for index in range(0, 2):
+            bracket = Bracket(
+                bracket_screw=WallScrew(),
+                dimensions=Vector(18.0 * MM, 90.0 * MM, 10.0 * MM),
+                label=f"bracket-{index}",
+                mount_arm_dimensions=(18.0 * MM, 12.0 * MM, 90.0 * MM),
+                mount_nut=RackMountNut(),
+                mount_nut_offset=4.0 * MM,
+                mount_screw=RackMountScrew(),
+            )
+            for pos in ["bottom", "top"]:
+                bracket_joint = bracket.joints[f"mount-{pos}"]
+                panel_joint = panel.joints[f"mount-hole-{index}-{pos}"]
+                panel_joint.connect_to(bracket_joint)
+            brackets.append(bracket)
+
+        super().__init__(
+            [],
+            children=[panel, *brackets],
+            label=f"wall-patch-panel",
+        )
 
 
 if __name__ == "__main__":

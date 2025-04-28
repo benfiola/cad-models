@@ -15,6 +15,7 @@ from build123d import (
     Mode,
     Pos,
     Rectangle,
+    RigidJoint,
     Solid,
     Vector,
     VectorLike,
@@ -74,13 +75,19 @@ class Bracket(Solid):
                     Rectangle(mount_arm_dimensions.X, mount_arm_dimensions.Y)
             arms = extrude(amount=mount_arm_dimensions.Z)
 
-            front_faces = arms.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-2:]
+            front_faces = (
+                arms.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-2:].sort_by(Axis.Y)
+            )
             for front_face in front_faces:
                 # create mount screw hole
                 with Locations(front_face.location):
                     ClearanceHole(
                         mount_screw, depth=mount_screw.length, counter_sunk=False
                     )
+                    joint_label = "mount-top"
+                    if front_faces[0] == front_face:
+                        joint_label = "mount-bottom"
+                    RigidJoint(joint_label, joint_location=front_face.location)
 
                 # create mount nut slot
                 top = front_face.location * Pos(
@@ -97,7 +104,7 @@ class Bracket(Solid):
                         align=(Align.CENTER, Align.MAX, Align.MAX),
                     )
 
-        super().__init__(builder.part.wrapped, label=label)
+        super().__init__(builder.part.wrapped, joints=builder.joints, label=label)
 
 
 class Model(Compound):
@@ -106,15 +113,13 @@ class Model(Compound):
             bracket_screw=WallScrew(),
             dimensions=Vector(18.0 * MM, 90.0 * MM, 10.0 * MM),
             label="bracket",
-            mount_arm_dimensions=(18.0 * MM, 16.0 * MM, 90.0 * MM),
+            mount_arm_dimensions=Vector(0.0 * MM, 12.0 * MM, 90.0 * MM),
             mount_nut=RackMountNut(),
             mount_nut_offset=4.0 * MM,
             mount_screw=RackMountScrew(),
         )
 
-        return super().__init__(
-            [], children=[bracket], label="wall-patch-panel-bracket"
-        )
+        return super().__init__([], children=[bracket])
 
 
 if __name__ == "__main__":
