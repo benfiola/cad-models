@@ -166,11 +166,11 @@ class Model(Compound):
             keystone_text_depth=0.5 * MM,
             keystone_text_size=5.0 * MM,
             keystone_text_style=FontStyle.BOLD,
-            mount_hole_dimensions=Vector(12.0 * MM, 6.0 * MM),
-            mount_hole_offset=Vector(3.0 * MM, 3.0 * MM),
+            mount_hole_dimensions=(12.0 * MM, 6.0 * MM),
+            mount_hole_offset=(3.0 * MM, 3.0 * MM),
             label="panel",
         )
-        super().__init__([], children=[panel])
+        super().__init__([], children=[panel], label=f"wall-patch-panel")
 
 
 if __name__ == "__main__":

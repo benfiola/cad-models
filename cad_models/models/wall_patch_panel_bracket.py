@@ -71,7 +71,7 @@ class Bracket(Solid):
             with BuildSketch(front_face):
                 spacing = (0.0, dimensions.Y - mount_arm_dimensions.Y)
                 with GridLocations(*spacing, 1, 2) as grid_locations:
-                    Rectangle(dimensions.X, mount_arm_dimensions.Y)
+                    Rectangle(mount_arm_dimensions.X, mount_arm_dimensions.Y)
             arms = extrude(amount=mount_arm_dimensions.Z)
 
             front_faces = arms.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-2:]
@@ -87,11 +87,11 @@ class Bracket(Solid):
                     Y=front_face.width / 2, Z=-mount_nut_offset
                 )
                 slot_dimensions = captive_nut_slot_dimensions(mount_nut)
-                offset = (front_face.width - mount_nut.nut_diameter) / 2
+                extra_height = (front_face.width - slot_dimensions.Y) / 2
                 with Locations(top):
                     Box(
-                        width=slot_dimensions.X,
-                        length=slot_dimensions.Y + offset,
+                        length=slot_dimensions.X,
+                        width=slot_dimensions.Y + extra_height,
                         height=mount_nut.nut_thickness,
                         mode=Mode.SUBTRACT,
                         align=(Align.CENTER, Align.MAX, Align.MAX),
@@ -106,13 +106,15 @@ class Model(Compound):
             bracket_screw=WallScrew(),
             dimensions=Vector(18.0 * MM, 90.0 * MM, 10.0 * MM),
             label="bracket",
-            mount_arm_dimensions=Vector(0.0 * MM, 12.0 * MM, 90.0 * MM),
+            mount_arm_dimensions=(18.0 * MM, 16.0 * MM, 90.0 * MM),
             mount_nut=RackMountNut(),
             mount_nut_offset=4.0 * MM,
             mount_screw=RackMountScrew(),
         )
 
-        return super().__init__([], children=[bracket])
+        return super().__init__(
+            [], children=[bracket], label="wall-patch-panel-bracket"
+        )
 
 
 if __name__ == "__main__":
