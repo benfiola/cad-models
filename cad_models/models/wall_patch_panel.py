@@ -28,7 +28,7 @@ from build123d import (
 
 from cad_models.common import RackMountNut, RackMountScrew, WallScrew
 from cad_models.models.keystone_receiver import KeystoneReceiver
-from cad_models.models.wall_patch_panel_bracket import Bracket
+from cad_models.models.wall_patch_panel_bracket import WallPatchPanelBracket
 
 
 class Panel(Solid):
@@ -62,7 +62,6 @@ class Panel(Solid):
         """
         base_keystone = KeystoneReceiver()
 
-        # convert VectorLikes into Vectors
         if isinstance(dimensions, Iterable):
             dimensions = Vector(*dimensions)
         if isinstance(keystone_grid_dimensions, Iterable):
@@ -192,9 +191,9 @@ class Model(Compound):
 
         brackets = []
         for index in range(0, 2):
-            bracket = Bracket(
+            bracket = WallPatchPanelBracket(
                 bracket_screw=WallScrew(),
-                dimensions=Vector(18.0 * MM, 90.0 * MM, 10.0 * MM),
+                dimensions=(18.0 * MM, 90.0 * MM, 10.0 * MM),
                 label=f"bracket-{index}",
                 mount_arm_dimensions=(18.0 * MM, 12.0 * MM, 90.0 * MM),
                 mount_nut=RackMountNut(),

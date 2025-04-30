@@ -30,7 +30,7 @@ from cad_models.common import (
 )
 
 
-class Bracket(Solid):
+class WallPatchPanelBracket(Solid):
     def __init__(
         self,
         *,
@@ -51,7 +51,6 @@ class Bracket(Solid):
         :param mount_nut_offset: the distance from the edge of the mount arm to place the mount captive nut slot
         :param mount_screw: the screw securing the 'other' object to the bracket
         """
-        # convert vectorlikes
         if isinstance(dimensions, Iterable):
             dimensions = Vector(dimensions)
         if isinstance(mount_arm_dimensions, Iterable):
@@ -109,11 +108,11 @@ class Bracket(Solid):
 
 class Model(Compound):
     def __init__(self):
-        bracket = Bracket(
+        bracket = WallPatchPanelBracket(
             bracket_screw=WallScrew(),
-            dimensions=Vector(18.0 * MM, 90.0 * MM, 10.0 * MM),
+            dimensions=(18.0 * MM, 90.0 * MM, 10.0 * MM),
             label="bracket",
-            mount_arm_dimensions=Vector(0.0 * MM, 12.0 * MM, 90.0 * MM),
+            mount_arm_dimensions=(18.0 * MM, 12.0 * MM, 90.0 * MM),
             mount_nut=RackMountNut(),
             mount_nut_offset=4.0 * MM,
             mount_screw=RackMountScrew(),
