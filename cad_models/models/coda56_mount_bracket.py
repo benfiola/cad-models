@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 
 import ocp_vscode
-from bd_warehouse.fastener import ClearanceHole, Screw
+from bd_warehouse.fastener import ClearanceHole, Nut
 from build123d import (
     MM,
     Align,
@@ -35,7 +35,7 @@ class RackOuterBracket(Solid):
         ear_dimensions: VectorLike,
         interface_hole_offset: float,
         interface_hole_spacing: float,
-        interface_nut: Screw,
+        interface_nut: Nut,
         label: str = "",
         mount_hole_dimensions: VectorLike,
         mount_hole_offset: VectorLike,
@@ -107,12 +107,12 @@ class RackOuterBracket(Solid):
 class Model(Compound):
     def __init__(self):
         bracket = RackOuterBracket(
-            arm_dimensions=(4.0 * MM, 41.35 * MM, 118.0 * MM),
-            ear_dimensions=(25.0 * MM, 41.35 * MM, 4.0 * MM),
+            arm_dimensions=(6.0 * MM, 41.35 * MM, 118.0 * MM),
+            ear_dimensions=(31.0 * MM, 41.35 * MM, 6.0 * MM),
             interface_hole_offset=3.0 * MM,
             interface_hole_spacing=11.5 * MM,
             interface_nut=RackInterfaceNut(),
-            mount_hole_dimensions=(6.0 * MM, 3.0 * MM),
+            mount_hole_dimensions=(12.0 * MM, 6.0 * MM),
             mount_hole_offset=(3.0 * MM, 3.0 * MM),
         )
         return super().__init__([], children=[bracket])
