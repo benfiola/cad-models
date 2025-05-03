@@ -1,18 +1,18 @@
 import math
+from collections.abc import Iterable
 from typing import Any, Literal
 
 from bd_warehouse.fastener import HexNut, Nut, PanHeadScrew, Screw
+from build123d import IN, MM, Align, BuildLine, BuildSketch, Face
+from build123d import GridLocations as BaseGridLocations
 from build123d import (
-    IN,
-    MM,
-    BuildLine,
-    BuildSketch,
-    Face,
     Line,
+    Location,
     Plane,
     Polyline,
     RadiusArc,
     Vector,
+    VectorLike,
     make_face,
 )
 
@@ -159,3 +159,118 @@ def captive_nut_slot_dimensions(
         rect_width = nut.nut_diameter + clearance
         rect_height = nut.nut_diameter * math.sin(math.pi / 3) + clearance
     return Vector(X=rect_width, Y=rect_height)
+
+
+class GridLocations(BaseGridLocations):
+    @classmethod
+    def area_grid(
+        cls,
+        *,
+        area: VectorLike,
+        item: VectorLike,
+        grid: VectorLike,
+        align: tuple[Align, Align] = (Align.CENTER, Align.CENTER),
+    ):
+        """
+        Convenience method that produces a GridLocations object.
+
+        Calculates the GridLocations' spacing given the following set of parameters.
+
+        :param area: the dimensions of the grid in absolute size
+        :param item: the size of the item to space evenly across the grid
+        :param grid: the number of rows and columns in the grid
+        :param align: passed through to GridLocations
+        """
+        if isinstance(area, Iterable):
+            area = Vector(*area)
+        if isinstance(grid, Iterable):
+            grid = Vector(*grid)
+        if isinstance(item, Iterable):
+            item = Vector(*item)
+
+        # calculate the minimum space taken by the grid
+        min_space = Vector(item.X, item.Y)
+        min_space.X *= grid.X
+        min_space.Y *= grid.Y
+        remaining_space = area - min_space
+        if remaining_space.X < 0 or remaining_space.X < 0:
+            raise ValueError(f"insufficient area for desired grid")
+
+        spacing = Vector(item.X, item.Y)
+        if grid.X != 0:
+            spacing.X += remaining_space.X / grid.X
+        if grid.Y != 0:
+            spacing.Y += remaining_space.Y / grid.Y
+        return GridLocations(
+            spacing.X, spacing.Y, int(grid.X), int(grid.Y), align=align
+        )
+
+
+def to_planar_locations(
+    plane: Plane, relative_locations: Iterable[Location]
+) -> Iterable[Location]:
+    """
+    Translates sketch locations to the locations as projected on the sketch workplane.
+
+    Can be used to locate in 3D space things that were sketched using GridLocations, etc.
+    """
+    locations = []
+    for relative_location in relative_locations:
+        position = plane.from_local_coords(relative_location.position)
+        location = Location(position)
+        locations.append(location)
+    return locations
+
+
+def row_major(a: Location):
+    """
+    A function used as the 'key' kwarg to a sort function that sorts locations in row major order.
+
+    For locations:
+    A B
+    C D
+
+    Will return:
+    A B C D
+    """
+    pos = a.position.to_tuple()
+    return -pos[1], pos[0]
+
+
+def col_major(a: Location):
+    """
+    A function used as the 'key' kwarg to a sort function that sorts locations in column major order.
+
+    For locations:
+    A B
+    C D
+
+    Will return:
+    A C B D
+    """
+    pos = a.position.to_tuple()
+    return pos[0], -pos[1]
+
+
+def centered_point_list(*points: tuple[float, float]) -> Iterable[tuple[float, float]]:
+    """
+    Takes a list of points used to construct a Polyline and centers them.
+
+    This allows you to construct Polyline shapes oriented arbitrarily around the origin (for easy construction),
+    and center them in a second pass via this method.
+    """
+    min_x = math.inf
+    min_y = math.inf
+    max_x = -math.inf
+    max_y = -math.inf
+    for x, y in points:
+        max_x = max(x, max_x)
+        max_y = max(y, max_y)
+        min_x = min(x, min_x)
+        min_y = min(y, min_y)
+    offset_x = (max_x - min_x) / 2
+    offset_y = (max_y - min_y) / 2
+    to_return = []
+    for point in points:
+        to_return.append((point[0] - offset_x, point[1] - offset_y))
+    return to_return

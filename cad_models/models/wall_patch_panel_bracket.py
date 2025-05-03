@@ -7,19 +7,22 @@ from build123d import (
     Align,
     Axis,
     Box,
+    BuildLine,
     BuildPart,
     BuildSketch,
     Compound,
-    GridLocations,
+    Location,
     Locations,
     Mode,
+    Plane,
+    Polyline,
     Pos,
-    Rectangle,
     RigidJoint,
     Solid,
     Vector,
     VectorLike,
     extrude,
+    make_face,
 )
 
 from cad_models.common import (
@@ -27,6 +30,7 @@ from cad_models.common import (
     RackMountScrew,
     WallScrew,
     captive_nut_slot_dimensions,
+    centered_point_list,
 )
 
 
@@ -37,7 +41,7 @@ class WallPatchPanelBracket(Solid):
         bracket_screw: Screw,
         dimensions: VectorLike,
         label: str = "",
-        mount_arm_dimensions: VectorLike,
+        mount_arm_profile: VectorLike,
         mount_nut: Nut,
         mount_nut_offset: float,
         mount_screw: Screw,
@@ -46,61 +50,76 @@ class WallPatchPanelBracket(Solid):
         :param bracket_screw: the screw securing the bracket to the wall
         :param dimensions: the dimensions of the bracket base
         :param label: the label for the produced solid
-        :param mount_arm_dimensions: the dimensions of the arms extending from the bracket base.  the depth of the arms is in addition to the depth of the bracket base
+        :param mount_arm_depth: the depth of the arms extending from the bracket base.  this is in addition to the depth of the bracket base
         :param mount_nut: the captive nut used to secure the mount screw to the bracket
         :param mount_nut_offset: the distance from the edge of the mount arm to place the mount captive nut slot
         :param mount_screw: the screw securing the 'other' object to the bracket
         """
         if isinstance(dimensions, Iterable):
             dimensions = Vector(dimensions)
-        if isinstance(mount_arm_dimensions, Iterable):
-            mount_arm_dimensions = Vector(mount_arm_dimensions)
+        if isinstance(mount_arm_profile, Iterable):
+            mount_arm_profile = Vector(*mount_arm_profile)
 
         with BuildPart() as builder:
-            # create the base
-            with BuildSketch():
-                Rectangle(dimensions.X, dimensions.Y)
-            extrude(amount=dimensions.Z)
-            front_face = builder.faces().sort_by(Axis.Z)[-1]
+            # create the bracket
+            with BuildSketch(Plane.YZ):
+                with BuildLine():
+                    # side profile of the bracket
+                    d = dimensions
+                    map = mount_arm_profile
+                    # design polyline where bottom left is origin for readability
+                    Polyline(
+                        centered_point_list(
+                            (0, 0),
+                            (d.Z + map.X, 0),
+                            (d.Z + map.X, d.Y),
+                            (0, d.Y),
+                            (0, d.Y - map.Y),
+                            (map.X, d.Y - map.Y),
+                            (map.X, map.Y),
+                            (0, map.Y),
+                            (0, 0),
+                        )
+                    )
+                make_face()
+            extrude(amount=dimensions.X)
 
             # create the bracket hole
-            with Locations(front_face.location):
+            front_face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[2]
+            location = front_face.location_at(0.5, 0.5)
+            with Locations(location):
                 ClearanceHole(bracket_screw)
 
-            # create mount arms
-            with BuildSketch(front_face):
-                spacing = (0.0, dimensions.Y - mount_arm_dimensions.Y)
-                with GridLocations(*spacing, 1, 2) as grid_locations:
-                    Rectangle(mount_arm_dimensions.X, mount_arm_dimensions.Y)
-            arms = extrude(amount=mount_arm_dimensions.Z)
-
-            front_faces = (
-                arms.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-2:].sort_by(Axis.Y)
+            arm_faces = (
+                builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[:2].sort_by(Axis.Z)
             )
-            for front_face in front_faces:
-                # create mount screw hole
-                with Locations(front_face.location):
+            for arm_face in arm_faces:
+                location = arm_face.location_at(0.5, 0.5)
+                with Locations(location):
+                    # create mount screw hole
                     ClearanceHole(
                         mount_screw, depth=mount_screw.length, counter_sunk=False
                     )
+
+                    # create mount joint
                     joint_label = "mount-top"
-                    if front_faces[0] == front_face:
+                    if arm_faces[0] == arm_face:
                         joint_label = "mount-bottom"
-                    RigidJoint(joint_label, joint_location=front_face.location)
+                    joint_location = Location(arm_face.position_at(0.5, 0.5))
+                    RigidJoint(joint_label, joint_location=joint_location)
 
                 # create mount nut slot
-                top = front_face.location * Pos(
-                    Y=front_face.width / 2, Z=-mount_nut_offset
-                )
+                top = arm_face.location_at(0.0, 0.5)
+                top *= Pos(Z=-mount_nut_offset)
                 slot_dimensions = captive_nut_slot_dimensions(mount_nut)
-                extra_height = (front_face.width - slot_dimensions.Y) / 2
+                extra_height = (arm_face.length - slot_dimensions.Y) / 2
                 with Locations(top):
                     Box(
-                        length=slot_dimensions.X,
-                        width=slot_dimensions.Y + extra_height,
+                        length=slot_dimensions.Y + extra_height,
+                        width=slot_dimensions.X,
                         height=mount_nut.nut_thickness,
                         mode=Mode.SUBTRACT,
-                        align=(Align.CENTER, Align.MAX, Align.MAX),
+                        align=(Align.MIN, Align.CENTER, Align.CENTER),
                     )
 
         super().__init__(builder.part.wrapped, joints=builder.joints, label=label)
@@ -110,9 +129,9 @@ class Model(Compound):
     def __init__(self):
         bracket = WallPatchPanelBracket(
             bracket_screw=WallScrew(),
-            dimensions=(18.0 * MM, 90.0 * MM, 10.0 * MM),
+            dimensions=(18.0 * MM, 90.0 * MM, 12.0 * MM),
             label="bracket",
-            mount_arm_dimensions=(18.0 * MM, 12.0 * MM, 90.0 * MM),
+            mount_arm_profile=(90.0 * MM, 12.0 * MM),
             mount_nut=RackMountNut(),
             mount_nut_offset=4.0 * MM,
             mount_screw=RackMountScrew(),
