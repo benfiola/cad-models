@@ -1,21 +1,23 @@
-from pathlib import Path
+from typing import cast
 
-import ocp_vscode
-from build123d import Axis, Compound, Location, RigidJoint, Solid, Vector, import_step
+from build123d import Axis, Location, RigidJoint, Solid, import_step
 
-step_file = Path(__file__).parent.joinpath("keystone_receiver.step")
+from cad_models.common import initialize
+from cad_models.data import data_file
 
 
 class KeystoneReceiver(Solid):
-    kr_dimensions: Vector
+    kr_length: float
+    kr_height: float
+    kr_width: float
 
     def __init__(self, label: str = ""):
-        solid: Solid = import_step(step_file)
-        solid = solid.rotate(Axis.X, 270.0)
+        solid: Solid = cast(Solid, import_step(data_file("keystone-receiver.step")))
+        solid = solid.rotate(Axis.X, 90)
 
         # find faces to calculate size + joint location
-        front_face = solid.faces().sort_by(Axis.Y)[0]
-        bottom_face = solid.faces().sort_by(Axis.Z)[0]
+        front_face = solid.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+        bottom_faces = solid.faces().filter_by(Axis.Z).sort_by(Axis.Z)[:3]
 
         # create joint
         joint_location = Location(front_face.position_at(0.5, 0.5))
@@ -27,16 +29,14 @@ class KeystoneReceiver(Solid):
 
         super().__init__(solid.wrapped, joints={joint.label: joint}, label=label)
 
-        # store size (calculated from faces)
-        size = Vector(front_face.length, front_face.width, bottom_face.width)
-        self.kr_dimensions = size
-
-
-class Model(Compound):
-    def __init__(self):
-        receiver = KeystoneReceiver()
-        super().__init__([], children=[receiver])
+        # calculate dimensions from faces
+        self.kr_length = front_face.length
+        self.kr_height = front_face.width
+        width = 0.0
+        for face in bottom_faces:
+            width += face.length
+        self.kr_width = width
 
 
 if __name__ == "__main__":
-    ocp_vscode.show_object(Model())
+    initialize(KeystoneReceiver())

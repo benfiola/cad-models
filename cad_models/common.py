@@ -2,8 +2,9 @@ import math
 from collections.abc import Iterable
 from typing import Any, Literal
 
+import ocp_vscode
 from bd_warehouse.fastener import HexNut, Nut, PanHeadScrew, Screw
-from build123d import IN, MM, Align, BuildLine, BuildSketch, Face
+from build123d import IN, MM, Align, BuildLine, BuildSketch, Compound, Face
 from build123d import GridLocations as BaseGridLocations
 from build123d import (
     Line,
@@ -11,6 +12,7 @@ from build123d import (
     Plane,
     Polyline,
     RadiusArc,
+    Solid,
     Vector,
     VectorLike,
     make_face,
@@ -158,7 +160,7 @@ def captive_nut_slot_dimensions(
     if isinstance(nut, HexNut):
         rect_width = nut.nut_diameter + clearance
         rect_height = nut.nut_diameter * math.sin(math.pi / 3) + clearance
-    return Vector(X=rect_width, Y=rect_height)
+    return Vector(X=rect_width, Y=rect_height, Z=nut.nut_thickness)
 
 
 class GridLocations(BaseGridLocations):
@@ -206,26 +208,11 @@ class GridLocations(BaseGridLocations):
         )
 
 
-def to_planar_locations(
-    plane: Plane, relative_locations: Iterable[Location]
-) -> Iterable[Location]:
-    """
-    Translates sketch locations to the locations as projected on the sketch workplane.
-
-    Can be used to locate in 3D space things that were sketched using GridLocations, etc.
-    """
-    locations = []
-    for relative_location in relative_locations:
-        position = plane.from_local_coords(relative_location.position)
-        location = Location(position)
-        locations.append(location)
-    return locations
-
-
-def row_major(a: Location):
+def row_major(x_dir: VectorLike | None = None, y_dir: VectorLike | None = None):
     """
     A function used as the 'key' kwarg to a sort function that sorts locations in row major order.
 
+    Accepts a VectorLike indicating the x direction and y direction
     For locations:
     A B
     C D
@@ -233,23 +220,48 @@ def row_major(a: Location):
     Will return:
     A B C D
     """
-    pos = a.position.to_tuple()
-    return -pos[1], pos[0]
+    if x_dir is None:
+        x_dir = (1, 0, 0)
+    if y_dir is None:
+        y_dir = (0, 1, 0)
+    x_dir = Vector(*x_dir)
+    y_dir = Vector(*y_dir)
+
+    def inner(a: Location):
+        pos = a.position
+        x = pos.dot(x_dir)
+        y = pos.dot(y_dir)
+        return y, x
+
+    return inner
 
 
-def col_major(a: Location):
+def col_major(x_dir: VectorLike | None = None, y_dir: VectorLike | None = None):
     """
-    A function used as the 'key' kwarg to a sort function that sorts locations in column major order.
+    A function used as the 'key' kwarg to a sort function that sorts locations in col major order.
 
+    Accepts a VectorLike indicating the x direction and y direction
     For locations:
     A B
     C D
 
     Will return:
-    A C B D
+    A B C D
     """
-    pos = a.position.to_tuple()
-    return pos[0], -pos[1]
+    if x_dir is None:
+        x_dir = (1, 0, 0)
+    if y_dir is None:
+        y_dir = (0, 1, 0)
+    x_dir = Vector(*x_dir)
+    y_dir = Vector(*y_dir)
+
+    def inner(a: Location):
+        pos = a.position
+        x = pos.dot(x_dir)
+        y = pos.dot(y_dir)
+        return x, y
+
+    return inner
 
 
 def centered_point_list(*points: tuple[float, float]) -> Iterable[tuple[float, float]]:
@@ -274,3 +286,8 @@ def centered_point_list(*points: tuple[float, float]) -> Iterable[tuple[float, f
     for point in points:
         to_return.append((point[0] - offset_x, point[1] - offset_y))
     return to_return
+
+
+def initialize(model: Solid | Compound):
+    ocp_vscode.set_defaults(reset_camera=ocp_vscode.Camera.KEEP)
+    ocp_vscode.show(model)
