@@ -22,7 +22,7 @@ from build123d import (
 from cad_models.common import Model, centered_point_list, col_major, initialize
 
 
-class Coda56MountTopBracket(Model):
+class MT6000MountBottomBracket(Model):
     def __init__(self, **kwargs):
         # parameters
         bracket_thickness = 5.0 * MM
@@ -31,9 +31,8 @@ class Coda56MountTopBracket(Model):
         hole_dimensions = Vector(12.0 * MM, 6.0 * MM)
         hole_offset = 3 * MM
         hole_spacing = 31.75 * MM
-        hook_length = 50 * MM
-        router_dimensions = Vector(51.5 * MM, 171 * MM, 171 * MM)
-        router_inset = 50 * MM
+        modem_dimensions = Vector(10 * MM, 20 * MM, 30 * MM)
+        modem_inset = 50 * MM
 
         with BuildPart() as builder:
             # create bracket (via top-down profile)
@@ -41,25 +40,14 @@ class Coda56MountTopBracket(Model):
                 with BuildLine():
                     bt = bracket_thickness
                     ed = ear_dimensions
-                    hl = hook_length
-                    rd = router_dimensions
-                    ri = router_inset
+                    md = modem_dimensions
+                    mi = modem_inset
 
                     points = centered_point_list(
                         (0, 0),
                         (ed.X + bt, 0),
-                        (ed.X + bt, ri),
-                        (ed.X + bt + rd.X + bt, ri),
-                        (ed.X + bt + rd.X + bt, ri + bt + hl),
-                        (ed.X + bt + rd.X, ri + bt + hl),
-                        (ed.X + bt + rd.X, ri + bt),
-                        (ed.X + bt, ri + bt),
-                        (ed.X + bt, ri + bt + rd.Z),
-                        (ed.X + bt + rd.X, ri + bt + rd.Z),
-                        (ed.X + bt + rd.X, ri + bt + rd.Z - hl),
-                        (ed.X + bt + rd.X + bt, ri + bt + rd.Z - hl),
-                        (ed.X + bt + rd.X + bt, ri + bt + rd.Z + bt),
-                        (ed.X, ri + bt + rd.Z + bt),
+                        (ed.X + bt, bt + mi + md.Z),
+                        (ed.X, bt + mi + md.Z),
                         (ed.X, bt),
                         (0, bt),
                         (0, 0),
@@ -70,13 +58,7 @@ class Coda56MountTopBracket(Model):
 
             # find edges to fillet
             ear_edges = builder.part.edges().filter_by(Axis.Y).sort_by(Axis.X)[:2]
-            bracket_edges = (
-                builder.part.edges()
-                .filter_by(Axis.Z)
-                .sort_by(Axis.X)[-4:]
-                .sort_by(Axis.Y)
-            )
-            fillet_edges = [*ear_edges, bracket_edges[0], bracket_edges[-1]]
+            fillet_edges = [*ear_edges]
 
             # create mount holes and joints
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
@@ -103,5 +85,5 @@ class Coda56MountTopBracket(Model):
         super().__init__(builder.part.wrapped, **kwargs)
 
 
-if __name__ == "__main__":
-    initialize(Coda56MountTopBracket())
+if __name__ == "__name__":
+    initialize(MT6000MountBottomBracket())

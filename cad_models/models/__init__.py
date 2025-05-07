@@ -3,21 +3,31 @@ from pathlib import Path
 
 from build123d import Compound
 
+from cad_models.common import Model
+
 models_folder = Path(__file__).parent
 
 
 def import_model(model_name: str) -> Compound:
-    module_name = model_name.replace("-", "_")
-    try:
-        module = import_module(f"cad_models.models.{module_name}")
-    except ImportError:
-        raise ValueError("model module not found")
-    model_cls: type[Compound] = getattr(module, "Model", None)
-    if not model_cls:
-        raise ValueError("model module does not have a Model class")
-    if not issubclass(model_cls, Compound):
-        raise ValueError("Model class not a build123d.Compound subclass")
-    return model_cls()
+    model_name = model_name.replace("-", "_")
+    module_name = f"cad_models.models.{model_name}"
+    module = import_module(module_name)
+    model_classes = []
+    for key, value in vars(module).items():
+        try:
+            if not issubclass(value, Model):
+                continue
+        except:
+            continue
+        if not value.__module__ == module_name:
+            continue
+        model_classes.append(value)
+    if not model_classes:
+        raise ValueError(f"model class not found")
+    if len(model_classes) > 1:
+        raise ValueError("more than one model class found")
+    model_class = model_classes[0]
+    return model_class()
 
 
 def list_model_names() -> list[str]:
@@ -28,5 +38,9 @@ def list_model_names() -> list[str]:
         if file.name == "__pycache__":
             continue
         model_name = file.stem.replace("_", "-")
+        try:
+            import_model(model_name)
+        except ValueError:
+            continue
         model_names.append(model_name)
     return model_names

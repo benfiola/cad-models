@@ -1,7 +1,4 @@
-from collections.abc import Iterable
-
-import ocp_vscode
-from bd_warehouse.fastener import ClearanceHole, CounterSunkScrew, Screw
+from bd_warehouse.fastener import ClearanceHole, CounterSunkScrew
 from build123d import (
     MM,
     Align,
@@ -9,24 +6,25 @@ from build123d import (
     BuildLine,
     BuildPart,
     BuildSketch,
-    Compound,
+    GridLocations,
+    Location,
     Locations,
     Mode,
     Plane,
     Polyline,
     Pos,
     Rectangle,
+    RigidJoint,
+    Rot,
     SlotOverall,
-    Solid,
+    Triangle,
     Vector,
-    VectorLike,
     extrude,
     fillet,
     make_face,
-    mirror,
 )
 
-from cad_models.common import centered_point_list
+from cad_models.common import Model, centered_point_list, col_major, initialize
 
 
 class RouterScrew(CounterSunkScrew):
@@ -36,128 +34,112 @@ class RouterScrew(CounterSunkScrew):
         )
 
 
-class Coda56MountBottomBracket(Solid):
-    def __init__(
-        self,
-        *,
-        corner_radius: float,
-        ear_dimensions: VectorLike,
-        label: str = "",
-        mount_hole_dimensions: VectorLike,
-        mount_hole_offset: VectorLike,
-        stand_dimensions: VectorLike,
-        stand_inset: float,
-        stand_screw: Screw,
-        stand_standoff_dimensions: VectorLike,
-    ):
-        if isinstance(ear_dimensions, Iterable):
-            ear_dimensions = Vector(*ear_dimensions)
-        if isinstance(mount_hole_dimensions, Iterable):
-            mount_hole_dimensions = Vector(*mount_hole_dimensions)
-        if isinstance(mount_hole_offset, Iterable):
-            mount_hole_offset = Vector(*mount_hole_offset)
-        if isinstance(stand_dimensions, Iterable):
-            stand_dimensions = Vector(*stand_dimensions)
-        if isinstance(stand_standoff_dimensions, Iterable):
-            stand_standoff_dimensions = Vector(*stand_standoff_dimensions)
+class Coda56MountBottomBracket(Model):
+    def __init__(self, **kwargs):
+        # derived values
+        bracket_thickness = 5.0 * MM
+        corner_radius = 3.0 * MM
+        ear_dimensions = Vector(28.0 * MM, 41.35 * MM, 0)
+        mount_hole_dimensions = Vector(12.0 * MM, 6.0 * MM)
+        mount_hole_offset = 3 * MM
+        mount_hole_spacing = 31.75 * MM
+        router_dimensions = Vector(51.5 * MM, 171 * MM, 171 * MM)
+        router_inset = 50 * MM
+        stand_screw = RouterScrew()
+        stand_thickness = 10 * MM
+        stand_standoff_dimensions = Vector(9 * MM, 18 * MM, 9 * MM)
 
         with BuildPart() as builder:
+            # create bracket (via top-down profile)
             with BuildSketch(Plane.XY):
-                # create the arm
                 with BuildLine():
+                    bt = bracket_thickness
                     ed = ear_dimensions
-                    sd = stand_dimensions
-                    si = stand_inset
+                    rd = router_dimensions
+                    ri = router_inset
 
-                    Polyline(
-                        centered_point_list(
-                            (0, 0),
-                            (0, ed.Z + si + sd.Y),
-                            (ed.Z, ed.Z + si + sd.Y),
-                            (ed.Z, ed.Z),
-                            (ed.Z + ed.X, ed.Z),
-                            (ed.Z + ed.X, 0),
-                            (0, 0),
-                        )
+                    points = centered_point_list(
+                        (0, 0),
+                        (ed.X + bt, 0),
+                        (ed.X + bt, ri + bt + rd.Z + bt),
+                        (ed.X, ri + bt + rd.Z + bt),
+                        (ed.X, bt),
+                        (0, bt),
+                        (0, 0),
                     )
+                    Polyline(*points)
                 make_face()
-            bracket = extrude(amount=ear_dimensions.Y)
+            extrude(amount=ear_dimensions.Y)
 
-            # find corners for final fillet
-            corners = bracket.edges().filter_by(
-                lambda shape: shape.length == ear_dimensions.Z
-            )
+            # find edges to fillet
+            ear_edges = builder.part.edges().filter_by(Axis.Y).sort_by(Axis.X)[:2]
+            fillet_edges = [*ear_edges]
 
-            arm_face = bracket.faces().filter_by(Axis.X).sort_by(Axis.X)[0]
-            with BuildSketch(arm_face):
-                # create the stand
-                location = Vector(arm_face.length, arm_face.width) / 2
+            # create stand base
+            face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[-1]
+            with BuildSketch(face):
+                location = Location((0, 0))
+                location *= Pos(X=face.length / 2, Y=-face.width / 2)
                 with Locations(location):
-                    Rectangle(
-                        stand_dimensions.Y,
-                        stand_dimensions.Z,
-                        align=(Align.MAX, Align.MAX),
-                    )
-            stand = extrude(amount=stand_dimensions.X)
+                    width = (bracket_thickness * 2) + router_dimensions.Z
+                    Rectangle(width, stand_thickness, align=(Align.MAX, Align.MIN))
+            stand = extrude(amount=router_dimensions.X)
 
-            top_stand_face = stand.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
-            with BuildSketch(top_stand_face) as sketch:
-                # create the standoffs
-                location = Vector(top_stand_face.length, 0) / 2
-                with Locations(location):
-                    standoff = Rectangle(
-                        stand_standoff_dimensions.Y,
-                        stand_standoff_dimensions.X,
-                        align=(Align.MAX, Align.CENTER),
-                    )
-                mirror(standoff, Plane.YZ)
-            standoff = extrude(amount=-stand_standoff_dimensions.Z, mode=Mode.SUBTRACT)
+            # create stand ribs
+            face = stand.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+            front_plane = Plane(face, x_dir=(1, 0, 0))
+            back_plane = front_plane.offset(-(router_dimensions.Y + bracket_thickness))
+            for plane in [front_plane, back_plane]:
+                with BuildSketch(plane):
+                    location = (router_dimensions.X / 2, stand_thickness / 2)
+                    with Locations(location):
+                        a = router_dimensions.X
+                        c = ear_dimensions.Y - stand_thickness
+                        Triangle(a=a, B=90, c=c, align=(Align.MAX, Align.MIN))
+                extrude(amount=-bracket_thickness)
 
-            standoff_faces = standoff.faces().filter_by(Axis.Z).sort_by(Axis.Z)[:2]
-            for standoff_face in standoff_faces:
-                # create the standoff clearance holes
-                offset = stand_dimensions.Z - stand_standoff_dimensions.Z
-                location = standoff_face.location_at(0.5, 0.5)
-                location *= Pos(Z=offset)
+            # create stand standoffs
+            face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
+            with BuildSketch(Plane(face, x_dir=(1, 0, 0))) as sketch:
+                spacing = router_dimensions.Z
+                spacing -= stand_standoff_dimensions.Y
+                with GridLocations(0, spacing, 1, 2) as grid_locations:
+                    Rectangle(stand_standoff_dimensions.X, stand_standoff_dimensions.Y)
+                    standoff_locations = grid_locations.locations
+            extrude(amount=-stand_standoff_dimensions.Z, mode=Mode.SUBTRACT)
+
+            # create stand standoff holes
+            for standoff_location in standoff_locations:
+                location = Location(standoff_location)
+                location *= Pos(Z=-stand_thickness)
+                location *= Rot(Y=180)
                 with Locations(location):
                     ClearanceHole(stand_screw, depth=stand_screw.length)
 
-            ear_face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
-            with BuildSketch(ear_face):
-                # create mount holes
-                location = Vector(-ear_face.length, -ear_face.width) / 2
-                location += mount_hole_offset
-
+            # create mount holes and joints
+            face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+            with BuildSketch(face):
+                location = Location((0, 0))
+                location *= Pos(X=-face.length / 2)
+                location *= Pos(X=mount_hole_offset)
+                location *= Pos(X=mount_hole_dimensions.X / 2)
                 with Locations(location):
-                    slot = SlotOverall(
-                        mount_hole_dimensions.X,
-                        mount_hole_dimensions.Y,
-                        align=(Align.MIN, Align.MIN),
-                    )
-                mirror(slot, Plane.XZ)
-            extrude(amount=-ear_dimensions.Z, mode=Mode.SUBTRACT)
+                    with GridLocations(0.0, mount_hole_spacing, 1, 2) as grid_locations:
+                        SlotOverall(mount_hole_dimensions.X, mount_hole_dimensions.Y)
+                        hole_locations = grid_locations.locations
+            extrude(amount=-bracket_thickness, mode=Mode.SUBTRACT)
+            locations = sorted(hole_locations, key=col_major(y_dir=(0, 0, -1)))
+            for index, location in enumerate(locations):
+                joint_location = Location(location.position) * Pos(Y=bracket_thickness)
+                RigidJoint(f"mount-{index}", joint_location=joint_location)
 
-            # fillet corners
-            fillet(corners, radius=corner_radius)
+            # apply fillet
+            fillet(fillet_edges, corner_radius)
 
-        super().__init__(builder.part.wrapped, joints=builder.joints, label=label)
-
-
-class Model(Compound):
-    def __init__(self):
-        # coda56 router dimensions: (170.942, 170.942, 51.562)
-        bracket = Coda56MountBottomBracket(
-            corner_radius=3.0 * MM,
-            ear_dimensions=(25.0 * MM, 41.35 * MM, 6.0 * MM),
-            mount_hole_dimensions=(12.0 * MM, 6.0 * MM),
-            mount_hole_offset=(3.0 * MM, 3.0 * MM),
-            stand_dimensions=(52 * MM, 152 * MM, 12.0 * MM),
-            stand_inset=(50 * MM),
-            stand_screw=RouterScrew(),
-            stand_standoff_dimensions=(9.0 * MM, 18.4 * MM, 9.2 * MM),
-        )
-        return super().__init__([], children=[bracket])
+        kwargs["obj"] = builder.part.wrapped
+        kwargs["joints"] = builder.part.joints
+        super().__init__(builder.part.wrapped, **kwargs)
 
 
 if __name__ == "__main__":
-    ocp_vscode.show_object(Model())
+    initialize(Coda56MountBottomBracket())

@@ -1,223 +1,165 @@
-from collections.abc import Iterable
 from copy import copy
 
-import ocp_vscode
 from build123d import (
     MM,
     Axis,
+    BuildLine,
     BuildPart,
     BuildSketch,
-    Compound,
-    FontStyle,
+    GridLocations,
     Location,
     Locations,
     Mode,
     Plane,
+    Polyline,
     Pos,
     Rectangle,
     RigidJoint,
     SlotOverall,
-    Solid,
-    SortBy,
     Text,
     Vector,
-    VectorLike,
     add,
     extrude,
     fillet,
+    make_face,
 )
 
 from cad_models.common import (
-    GridLocations,
-    RackMountNut,
-    RackMountScrew,
-    WallScrew,
+    Model,
+    centered_point_list,
     col_major,
+    initialize,
     row_major,
-    to_planar_locations,
 )
+from cad_models.data import data_file
 from cad_models.models.keystone_receiver import KeystoneReceiver
-from cad_models.models.wall_patch_panel_bracket import WallPatchPanelBracket
 
 
-class Panel(Solid):
-    def __init__(
-        self,
-        *,
-        corner_radius: float | None,
-        keystone_count: tuple[int, int],
-        keystone_grid_dimensions: VectorLike,
-        keystone_text: list[list[str | None]],
-        keystone_text_depth: float,
-        keystone_text_size: float,
-        keystone_text_style: FontStyle,
-        label: str = "",
-        mount_hole_dimensions: VectorLike,
-        mount_hole_offset: VectorLike,
-        panel_dimensions: VectorLike,
-    ):
-        """
-        :param corner_radius: the fillet radius for the panel corners
-        :param keystone_count: an (x, y) tuple indicating the number of keystones along the x and y axes
-        :param keystone_grid_dimensions: the dimensions for the centered keystone grid relative to the overall panel
-        :param keystone_text: the physical text label (or None, if none) to add to each keystone.  list is in column order.
-        :param keystone_text_depth: the emboss depth of the keystone text labels
-        :param keystone_text_size: the size of the keystone text labels in mm
-        :param keystone_text_style: the style of the keystone text labels
-        :param label: the label to give the resulting solid
-        :param mount_hole_dimensions: the dimensions for the panel mount holes
-        :param mount_hole_offset: the distance of the mount holes from the corners of the panel
-        :param panel_dimensions: the dimensions for the whole panel
-        """
-        if isinstance(keystone_grid_dimensions, Iterable):
-            keystone_grid_dimensions = Vector(*keystone_grid_dimensions)
-        if isinstance(mount_hole_dimensions, Iterable):
-            mount_hole_dimensions = Vector(*mount_hole_dimensions)
-        if isinstance(mount_hole_offset, Iterable):
-            mount_hole_offset = Vector(*mount_hole_offset)
-        if isinstance(panel_dimensions, Iterable):
-            panel_dimensions = Vector(*panel_dimensions)
+class WallPatchPanel(Model):
+    def __init__(self, **kwargs):
+        # parameters
+        corner_radius = 3 * MM
+        ear_dimensions = Vector(20 * MM, 0, 5 * MM)
+        grid_count = Vector(3.0, 3.0)
+        grid_dimensions = Vector(60 * MM, 82 * MM)
+        grid_label_font_depth = 0.5 * MM
+        grid_label_font_size = 5 * MM
+        grid_label_font_style = "black"
+        grid_labels = [
+            ["br1-1", "br1-2", "br2-1"],
+            ["br2-2", None, "lr-1"],
+            ["lr-2", "o-1", "o-2"],
+        ]
+        hole_dimensions = Vector(12 * MM, 6 * MM)
+        hole_spacing = Vector(230 * MM, 70 * MM)
+        panel_dimensions = Vector(250 * MM, 90 * MM, 11.25 * MM)
 
-        with BuildPart(mode=Mode.PRIVATE):
-            base_keystone = KeystoneReceiver()
-            keystone_size = base_keystone.kr_dimensions
+        # derived values
+        ear_dimensions.Y = panel_dimensions.Y
 
         with BuildPart() as builder:
-            with BuildSketch(Plane.XZ):
-                # create panel
-                rectangle = Rectangle(panel_dimensions.X, panel_dimensions.Y)
-
-                # create mount holes
-                spacing = Vector(rectangle.width, rectangle.rectangle_height)
-                spacing -= mount_hole_offset * 2
-                spacing -= mount_hole_dimensions
-                with GridLocations(
-                    spacing.X, spacing.Y, 2, 2
-                ) as mount_hole_grid_location:
-                    SlotOverall(
-                        mount_hole_dimensions.X,
-                        mount_hole_dimensions.Y,
-                        mode=Mode.SUBTRACT,
+            # create panel
+            with BuildSketch(Plane.XY):
+                with BuildLine():
+                    pd = panel_dimensions
+                    ed = ear_dimensions
+                    points = centered_point_list(
+                        (0, 0),
+                        (0, ed.Z),
+                        (ed.X, ed.Z),
+                        (ed.X, pd.Z),
+                        (pd.X - ed.X, pd.Z),
+                        (pd.X - ed.X, ed.Z),
+                        (pd.X, ed.Z),
+                        (pd.X, 0),
+                        (0, 0),
                     )
+                    Polyline(*points)
+                make_face()
+            extrude(amount=panel_dimensions.Y)
 
-                # create keystone cutouts
-                spacing = keystone_grid_dimensions
-                with GridLocations.area_grid(
-                    area=keystone_grid_dimensions,
-                    grid=keystone_count,
-                    item=keystone_size,
-                ) as keystone_grid_location:
-                    Rectangle(keystone_size.X, keystone_size.Y, mode=Mode.SUBTRACT)
-            panel = extrude(amount=panel_dimensions.Z)
-            front_face = panel.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+            # save corners for final fillet
+            fillet_edges = builder.part.edges().filter_by(Axis.Y).sort_by(Axis.Y)[:4]
 
-            keystone_grid_locations = sorted(
-                keystone_grid_location.locations, key=row_major
-            )
-            keystone_locations = to_planar_locations(
-                Plane(front_face), keystone_grid_locations
-            )
-            keystones: list[KeystoneReceiver] = []
-            for index, keystone_location in enumerate(keystone_locations):
-                x = int(index / keystone_count[1])
-                y = index % keystone_count[1]
-
-                # create cutout joint
-                location = Location(keystone_location.position)
-                cutout_joint = RigidJoint(f"keystone-{x}-{y}", joint_location=location)
-
-                # create keystone
-                keystone = copy(base_keystone)
-                keystone.label = f"keystone-{x}-{y}"
-                keystones.append(keystone)
-                keystone_joint: RigidJoint = keystone.joints["keystone"]
-
-                # attach keystone to cutout
-                cutout_joint.connect_to(keystone_joint)
-                add(keystone)
-
-            front_face = builder.faces().sort_by(SortBy.AREA)[-2:].sort_by(Axis.Y)[0]
-            with BuildSketch(front_face) as sketch:
-                for index, keystone_location in enumerate(keystone_grid_locations):
-                    x = int(index / keystone_count[1])
-                    y = index % keystone_count[1]
-
-                    # create keystone label
-                    ks_label = keystone_text[x][y]
-                    if ks_label is None:
-                        continue
-                    location = Location(keystone_location)
-                    location *= Pos(Y=keystone.kr_dimensions.Y / 2)
-                    with Locations(location):
-                        Text(
-                            ks_label,
-                            font_size=keystone_text_size,
-                            font_style=keystone_text_style,
-                        )
-            extrude(amount=-keystone_text_depth, mode=Mode.SUBTRACT)
-
-            mount_hole_locations = to_planar_locations(
-                Plane(front_face),
-                sorted(mount_hole_grid_location.locations, key=col_major),
-            )
-            mount_hole_locations = zip(
-                mount_hole_locations[::2], mount_hole_locations[1::2]
-            )
-            for index, (top, bottom) in enumerate(mount_hole_locations):
-                # create mount joint
+            # create mount holes and joints
+            face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+            with BuildSketch(face):
+                with GridLocations(
+                    hole_spacing.X, hole_spacing.Y, 2, 2
+                ) as grid_locations:
+                    SlotOverall(hole_dimensions.X, hole_dimensions.Y)
+                    mount_hole_locations = grid_locations.locations
+            extrude(amount=-ear_dimensions.Z, mode=Mode.SUBTRACT)
+            locations = sorted(mount_hole_locations, key=col_major())
+            pairs = zip(locations[::2], locations[1::2])
+            for index, (top, bottom) in enumerate(pairs):
+                top = Location(top.position) * Pos(Y=ear_dimensions.Z)
+                bottom = Location(bottom.position) * Pos(Y=ear_dimensions.Z)
                 RigidJoint(f"mount-{index}-top", joint_location=top)
                 RigidJoint(f"mount-{index}-bottom", joint_location=bottom)
 
+            # create base keystone for cutouts and future attachments
+            with BuildPart(mode=Mode.PRIVATE):
+                base_keystone = KeystoneReceiver()
+
+            # create keystone cutouts
+            face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+            with BuildSketch(face) as grid_sketch:
+                spacing = Vector(grid_dimensions)
+                spacing.X /= grid_count.X
+                spacing.Y /= grid_count.Y
+                with GridLocations(
+                    spacing.X, spacing.Y, int(grid_count.X), int(grid_count.Y)
+                ) as grid_locations:
+                    Rectangle(base_keystone.kr_length, base_keystone.kr_height)
+                    keystone_locations = grid_locations.locations
+                    keystone_local_locations = grid_locations.local_locations
+            extrude(amount=-panel_dimensions.Z, mode=Mode.SUBTRACT)
+
+            # attach keystones
+            locations = sorted(keystone_locations, key=row_major(y_dir=(0, 0, -1)))
+            for index, keystone_location in enumerate(locations):
+                x = int(index / grid_count.Y)
+                y = index % int(grid_count.Y)
+                joint_location = Location(keystone_location.position)
+                cutout_joint = RigidJoint(
+                    f"keystone-{x}-{y}", joint_location=joint_location
+                )
+                keystone = copy(base_keystone)
+                joint: RigidJoint = keystone.joints["keystone"]
+                cutout_joint.connect_to(joint)
+                add(keystone)
+
+            # create keystone labels
+            face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+            font_path = data_file(f"overpass-{grid_label_font_style}.ttf")
+            with BuildSketch(Plane(face, x_dir=(1, 0, 0))) as text_sketch:
+                locations = sorted(
+                    keystone_local_locations, key=row_major(y_dir=(0, -1, 0))
+                )
+                for index, keystone_location in enumerate(locations):
+                    x = int(index / grid_count.Y)
+                    y = index % int(grid_count.Y)
+                    label = grid_labels[y][x]
+                    if not label:
+                        continue
+                    location = Location(keystone_location.position)
+                    location *= Pos(Y=base_keystone.kr_height / 2)
+                    with Locations(location):
+                        Text(
+                            label,
+                            font_path=f"{font_path}",
+                            font_size=grid_label_font_size,
+                        )
+            extrude(amount=-grid_label_font_depth, mode=Mode.SUBTRACT)
+
             # fillet corners
-            corners = builder.edges().filter_by(Axis.Y).sort_by(SortBy.DISTANCE)[-4:]
-            fillet(corners, radius=corner_radius)
+            fillet(fillet_edges, corner_radius)
 
-        super().__init__(builder.part.wrapped, joints=builder.joints, label=label)
-
-
-class Model(Compound):
-    def __init__(self):
-        panel = Panel(
-            corner_radius=3.0 * MM,
-            keystone_count=(3, 3),
-            keystone_grid_dimensions=(60.0 * MM, 82.0 * MM),
-            keystone_text=[
-                ["br1-1", "br1-2", "br2-1"],
-                ["br2-2", None, "lr-1"],
-                ["lr-2", "o-1", "o-2"],
-            ],
-            keystone_text_depth=0.5 * MM,
-            keystone_text_size=5.0 * MM,
-            keystone_text_style=FontStyle.BOLD,
-            mount_hole_dimensions=(12.0 * MM, 6.0 * MM),
-            mount_hole_offset=(3.0 * MM, 3.0 * MM),
-            panel_dimensions=(250.0 * MM, 90.0 * MM, 4.0 * MM),
-            label="panel",
-        )
-
-        brackets = []
-        for index in range(0, 2):
-            bracket = WallPatchPanelBracket(
-                bracket_screw=WallScrew(),
-                dimensions=(18.0 * MM, 90.0 * MM, 10.0 * MM),
-                label=f"bracket-{index}",
-                mount_arm_profile=(90.0 * MM, 12.0 * MM),
-                mount_nut=RackMountNut(),
-                mount_nut_offset=4.0 * MM,
-                mount_screw=RackMountScrew(),
-            )
-            for pos in ["bottom", "top"]:
-                bracket_joint: RigidJoint = bracket.joints[f"mount-{pos}"]
-                panel_joint: RigidJoint = panel.joints[f"mount-{index}-{pos}"]
-                panel_joint.connect_to(bracket_joint)
-            brackets.append(bracket)
-
-        super().__init__(
-            [],
-            children=[panel, *brackets],
-            label=f"wall-patch-panel",
-        )
+        kwargs["obj"] = builder.part.wrapped
+        kwargs["joints"] = builder.part.joints
+        super().__init__(builder.part.wrapped, **kwargs)
 
 
 if __name__ == "__main__":
-    ocp_vscode.show_object(Model())
+    initialize(WallPatchPanel())
