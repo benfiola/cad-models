@@ -34,9 +34,11 @@ class Coda56(Solid):
     standoff_spacing: float
 
     def __init__(self, **kwargs):
-        dimensions = Vector(51.5 * MM, 204.12 * MM, 178.34 * MM)
+        # added .5 MM tolerance
+        dimensions = Vector(52.0 * MM, 204.6 * MM, 178.84 * MM)
         screw = RouterScrew()
-        standoff_dimensions = Vector(8.74 * MM, 14.5 * MM, 8 * MM)
+        # added .5 MM tolerance
+        standoff_dimensions = Vector(9.25 * MM, 15.0 * MM, 8.5 * MM)
         standoff_spacing = 130.8 * MM
         standoff_hole_offset = 1.75 * MM
 
