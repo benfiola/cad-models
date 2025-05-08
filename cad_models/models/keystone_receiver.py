@@ -1,15 +1,13 @@
 from typing import cast
 
-from build123d import Axis, Location, RigidJoint, Solid, import_step
+from build123d import Axis, Location, RigidJoint, Solid, Vector, import_step
 
 from cad_models.common import Model, initialize
 from cad_models.data import data_file
 
 
 class KeystoneReceiver(Model):
-    kr_length: float
-    kr_height: float
-    kr_width: float
+    kr_dimensions: Vector
 
     def __init__(self, **kwargs):
         solid: Solid = cast(Solid, import_step(data_file("keystone-receiver.step")))
@@ -32,12 +30,10 @@ class KeystoneReceiver(Model):
         super().__init__(solid, **kwargs)
 
         # calculate dimensions from faces
-        self.kr_length = front_face.length
-        self.kr_height = front_face.width
         width = 0.0
         for face in bottom_faces:
             width += face.length
-        self.kr_width = width
+        self.kr_dimensions = Vector(front_face.length, front_face.width, width)
 
 
 if __name__ == "__main__":

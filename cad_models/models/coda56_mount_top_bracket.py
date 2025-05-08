@@ -20,6 +20,7 @@ from build123d import (
 )
 
 from cad_models.common import Model, centered_point_list, col_major, initialize
+from cad_models.models.coda56 import Coda56
 
 
 class Coda56MountTopBracket(Model):
@@ -32,7 +33,7 @@ class Coda56MountTopBracket(Model):
         hole_offset = 3 * MM
         hole_spacing = 31.75 * MM
         hook_length = 50 * MM
-        router_dimensions = Vector(51.5 * MM, 171 * MM, 171 * MM)
+        router = Coda56()
         router_inset = 50 * MM
 
         with BuildPart() as builder:
@@ -42,7 +43,7 @@ class Coda56MountTopBracket(Model):
                     bt = bracket_thickness
                     ed = ear_dimensions
                     hl = hook_length
-                    rd = router_dimensions
+                    rd = router.c_dimensions
                     ri = router_inset
 
                     points = centered_point_list(
@@ -93,7 +94,7 @@ class Coda56MountTopBracket(Model):
             locations = sorted(hole_locations, key=col_major(y_dir=(0, 0, -1)))
             for index, location in enumerate(locations):
                 joint_location = Location(location.position) * Pos(Y=bracket_thickness)
-                RigidJoint(f"mount-{index}", joint_location=joint_location)
+                RigidJoint(f"server-rack-{index}", joint_location=joint_location)
 
             # apply fillet
             fillet(fillet_edges, corner_radius)

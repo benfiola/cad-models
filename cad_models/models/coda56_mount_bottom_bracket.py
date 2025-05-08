@@ -1,4 +1,4 @@
-from bd_warehouse.fastener import ClearanceHole, CounterSunkScrew
+from bd_warehouse.fastener import ClearanceHole
 from build123d import (
     MM,
     Align,
@@ -25,13 +25,7 @@ from build123d import (
 )
 
 from cad_models.common import Model, centered_point_list, col_major, initialize
-
-
-class RouterScrew(CounterSunkScrew):
-    def __init__(self, **kwargs):
-        super().__init__(
-            size="M2.5-0.45", length=6 * MM, fastener_type="iso7046", **kwargs
-        )
+from cad_models.models.coda56 import Coda56
 
 
 class Coda56MountBottomBracket(Model):
@@ -43,11 +37,9 @@ class Coda56MountBottomBracket(Model):
         mount_hole_dimensions = Vector(12.0 * MM, 6.0 * MM)
         mount_hole_offset = 3 * MM
         mount_hole_spacing = 31.75 * MM
-        router_dimensions = Vector(51.5 * MM, 171 * MM, 171 * MM)
+        router = Coda56()
         router_inset = 50 * MM
-        stand_screw = RouterScrew()
         stand_thickness = 10 * MM
-        stand_standoff_dimensions = Vector(9 * MM, 18 * MM, 9 * MM)
 
         with BuildPart() as builder:
             # create bracket (via top-down profile)
@@ -55,7 +47,7 @@ class Coda56MountBottomBracket(Model):
                 with BuildLine():
                     bt = bracket_thickness
                     ed = ear_dimensions
-                    rd = router_dimensions
+                    rd = router.c_dimensions
                     ri = router_inset
 
                     points = centered_point_list(
@@ -81,40 +73,51 @@ class Coda56MountBottomBracket(Model):
                 location = Location((0, 0))
                 location *= Pos(X=face.length / 2, Y=-face.width / 2)
                 with Locations(location):
-                    width = (bracket_thickness * 2) + router_dimensions.Z
+                    width = (bracket_thickness * 2) + router.c_dimensions.Z
                     Rectangle(width, stand_thickness, align=(Align.MAX, Align.MIN))
-            stand = extrude(amount=router_dimensions.X)
+            stand = extrude(amount=router.c_dimensions.X)
 
             # create stand ribs
             face = stand.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
             front_plane = Plane(face, x_dir=(1, 0, 0))
-            back_plane = front_plane.offset(-(router_dimensions.Y + bracket_thickness))
+            back_plane = front_plane.offset(
+                -(router.c_dimensions.Z + bracket_thickness)
+            )
             for plane in [front_plane, back_plane]:
                 with BuildSketch(plane):
-                    location = (router_dimensions.X / 2, stand_thickness / 2)
+                    location = (router.c_dimensions.X / 2, stand_thickness / 2)
                     with Locations(location):
-                        a = router_dimensions.X
+                        a = router.c_dimensions.X
                         c = ear_dimensions.Y - stand_thickness
                         Triangle(a=a, B=90, c=c, align=(Align.MAX, Align.MIN))
                 extrude(amount=-bracket_thickness)
 
             # create stand standoffs
-            face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
-            with BuildSketch(Plane(face, x_dir=(1, 0, 0))) as sketch:
-                spacing = router_dimensions.Z
-                spacing -= stand_standoff_dimensions.Y
-                with GridLocations(0, spacing, 1, 2) as grid_locations:
-                    Rectangle(stand_standoff_dimensions.X, stand_standoff_dimensions.Y)
-                    standoff_locations = grid_locations.locations
-            extrude(amount=-stand_standoff_dimensions.Z, mode=Mode.SUBTRACT)
+            stand_face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
+            with BuildSketch(Plane(stand_face, x_dir=(1, 0, 0))) as sketch:
+                spacing = router.standoff_spacing
+                with GridLocations(0, spacing, 1, 2):
+                    Rectangle(
+                        router.standoff_dimensions.X, router.standoff_dimensions.Y
+                    )
+                offset = router.standoff_hole_offset * 2
+                with GridLocations(0, spacing + offset, 1, 2) as grid_locations:
+                    hole_locations = grid_locations.locations
+            extrude(amount=-router.standoff_dimensions.Z, mode=Mode.SUBTRACT)
 
-            # create stand standoff holes
-            for standoff_location in standoff_locations:
-                location = Location(standoff_location)
+            # create stand standoff holes and joints
+            for hole, hole_location in enumerate(hole_locations):
+                # hole
+                location = Location(hole_location)
                 location *= Pos(Z=-stand_thickness)
                 location *= Rot(Y=180)
                 with Locations(location):
-                    ClearanceHole(stand_screw, depth=stand_screw.length)
+                    ClearanceHole(router.screw, depth=router.screw.length)
+
+                # joint
+                location = Location(hole_location.position)
+                location *= Pos(Z=-router.standoff_dimensions.Z)
+                RigidJoint(f"coda-{hole}", joint_location=location)
 
             # create mount holes and joints
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
@@ -131,7 +134,7 @@ class Coda56MountBottomBracket(Model):
             locations = sorted(hole_locations, key=col_major(y_dir=(0, 0, -1)))
             for index, location in enumerate(locations):
                 joint_location = Location(location.position) * Pos(Y=bracket_thickness)
-                RigidJoint(f"mount-{index}", joint_location=joint_location)
+                RigidJoint(f"server-rack-{index}", joint_location=joint_location)
 
             # apply fillet
             fillet(fillet_edges, corner_radius)
@@ -139,6 +142,12 @@ class Coda56MountBottomBracket(Model):
         kwargs["obj"] = builder.part.wrapped
         kwargs["joints"] = builder.part.joints
         super().__init__(builder.part.wrapped, **kwargs)
+
+    def mount(self, coda: Coda56):
+        for hole in range(0, 2):
+            coda_joint: RigidJoint = coda.joints[f"mount-{hole}"]
+            mount_joint: RigidJoint = self.joints[f"coda-{hole}"]
+            mount_joint.connect_to(coda_joint)
 
 
 if __name__ == "__main__":

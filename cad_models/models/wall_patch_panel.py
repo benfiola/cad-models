@@ -111,7 +111,9 @@ class WallPatchPanel(Model):
                 with GridLocations(
                     spacing.X, spacing.Y, int(grid_count.X), int(grid_count.Y)
                 ) as grid_locations:
-                    Rectangle(base_keystone.kr_length, base_keystone.kr_height)
+                    Rectangle(
+                        base_keystone.kr_dimensions.X, base_keystone.kr_dimensions.Y
+                    )
                     keystone_locations = grid_locations.locations
                     keystone_local_locations = grid_locations.local_locations
             extrude(amount=-panel_dimensions.Z, mode=Mode.SUBTRACT)
@@ -144,7 +146,7 @@ class WallPatchPanel(Model):
                     if not label:
                         continue
                     location = Location(keystone_location.position)
-                    location *= Pos(Y=base_keystone.kr_height / 2)
+                    location *= Pos(Y=base_keystone.kr_dimensions.Z / 2)
                     with Locations(location):
                         Text(
                             label,

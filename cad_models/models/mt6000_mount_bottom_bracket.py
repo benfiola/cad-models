@@ -75,7 +75,7 @@ class MT6000MountBottomBracket(Model):
             locations = sorted(hole_locations, key=col_major(y_dir=(0, 0, -1)))
             for index, location in enumerate(locations):
                 joint_location = Location(location.position) * Pos(Y=bracket_thickness)
-                RigidJoint(f"mount-{index}", joint_location=joint_location)
+                RigidJoint(f"serve-rack-mount-{index}", joint_location=joint_location)
 
             # apply fillet
             fillet(fillet_edges, corner_radius)

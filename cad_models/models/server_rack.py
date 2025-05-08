@@ -79,7 +79,7 @@ class ServerRack(Model):
     def side_mount(self, item: Solid | Compound, rack_u: int):
         for hole in range(0, 2):
             rack_joint: RigidJoint = self.joints[f"mount-{rack_u}-1-{hole}"]
-            item_joint: RigidJoint = item.joints[f"mount-{hole}"]
+            item_joint: RigidJoint = item.joints[f"server-rack-{hole}"]
             rack_joint.connect_to(item_joint)
 
 
