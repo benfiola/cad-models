@@ -20,6 +20,7 @@ from build123d import (
 )
 
 from cad_models.common import Model, centered_point_list, col_major, initialize
+from cad_models.models.mt6000 import MT6000
 
 
 class MT6000MountTopBracket(Model):
@@ -31,7 +32,7 @@ class MT6000MountTopBracket(Model):
         hole_dimensions = Vector(12.0 * MM, 6.0 * MM)
         hole_offset = 3 * MM
         hole_spacing = 31.75 * MM
-        modem_dimensions = Vector(10 * MM, 20 * MM, 30 * MM)
+        modem = MT6000()
         modem_inset = 50 * MM
 
         with BuildPart() as builder:
@@ -40,7 +41,7 @@ class MT6000MountTopBracket(Model):
                 with BuildLine():
                     bt = bracket_thickness
                     ed = ear_dimensions
-                    md = modem_dimensions
+                    md = modem.m_dimensions
                     mi = modem_inset
 
                     points = centered_point_list(
@@ -59,6 +60,9 @@ class MT6000MountTopBracket(Model):
             # find edges to fillet
             ear_edges = builder.part.edges().filter_by(Axis.Y).sort_by(Axis.X)[:2]
             fillet_edges = [*ear_edges]
+
+            face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[-1]
+            print("here")
 
             # create mount holes and joints
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
@@ -83,6 +87,12 @@ class MT6000MountTopBracket(Model):
         kwargs["obj"] = builder.part.wrapped
         kwargs["joints"] = builder.part.joints
         super().__init__(builder.part.wrapped, **kwargs)
+
+    def mount(self, mt: MT6000):
+        for hole in range(0, 2):
+            mount_joint: RigidJoint = self.joints[f"mt6000-{hole}"]
+            mt_joint: RigidJoint = mt.joints[f"mount-{hole}"]
+            mount_joint.connect_to(mt_joint)
 
 
 if __name__ == "__main__":
