@@ -15,7 +15,7 @@ class MT6000Mount(Compound):
         mt6000 = MT6000(color=Color("white", alpha=0.7))
         bracket.mount(mt6000)
 
-        super().__init__(None, children=[server_rack, bracket])
+        super().__init__(None, children=[server_rack, bracket, mt6000])
 
 
 if __name__ == "__main__":

@@ -39,6 +39,7 @@
           }
         ],
         "python.defaultInterpreterPath": "/python/bin/python",
+        "python.analysis.typeCheckingMode": "basic",
         "[python]": {
           "editor.defaultFormatter": "ms-python.black-formatter"
         }

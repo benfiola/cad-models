@@ -4,7 +4,9 @@ from build123d import (
     BuildLine,
     BuildPart,
     BuildSketch,
+    Circle,
     GridLocations,
+    Keep,
     Location,
     Locations,
     Mode,
@@ -12,6 +14,7 @@ from build123d import (
     Polyline,
     Pos,
     RigidJoint,
+    Rot,
     SlotOverall,
     Vector,
     extrude,
@@ -47,8 +50,8 @@ class MT6000MountTopBracket(Model):
                     points = centered_point_list(
                         (0, 0),
                         (ed.X + bt, 0),
-                        (ed.X + bt, bt + mi + md.Z),
-                        (ed.X, bt + mi + md.Z),
+                        (ed.X + bt, bt + mi + md.X),
+                        (ed.X, bt + mi + md.X),
                         (ed.X, bt),
                         (0, bt),
                         (0, 0),
@@ -61,8 +64,31 @@ class MT6000MountTopBracket(Model):
             ear_edges = builder.part.edges().filter_by(Axis.Y).sort_by(Axis.X)[:2]
             fillet_edges = [*ear_edges]
 
+            # create modem mounts
+            ear_face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
             face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[-1]
-            print("here")
+            plane = ear_face.offset(-modem_inset)
+            faces = face.split(plane, keep=Keep.BOTH)
+            face = faces.faces().sort_by(Axis.Y)[1]
+            with BuildSketch(face):
+                spacing = modem.hole_spacing.X
+                with GridLocations(spacing, 0, 2, 1) as grid_locations:
+                    Circle(modem.hole_slot_dimensions.X / 2)
+                    post_locations = grid_locations.locations
+            solids = extrude(amount=modem.hole_depth / 2)
+            faces = solids.faces().filter_by(Axis.X).sort_by(Axis.X)[-2:]
+            for face in faces:
+                with BuildSketch(face):
+                    Circle(modem.hole_diameter / 2)
+                extrude(amount=modem.hole_depth / 2)
+
+            # create joints
+            for hole, post_location in enumerate(post_locations):
+                location = Location(post_location.position)
+                location *= Pos(X=modem.hole_depth)
+                # TODO: set correct orientation of all joints in project
+                location *= Rot(Z=90)
+                RigidJoint(f"mt6000-{hole}", joint_location=location)
 
             # create mount holes and joints
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
@@ -91,7 +117,9 @@ class MT6000MountTopBracket(Model):
     def mount(self, mt: MT6000):
         for hole in range(0, 2):
             mount_joint: RigidJoint = self.joints[f"mt6000-{hole}"]
+            mount_location = mount_joint.location
             mt_joint: RigidJoint = mt.joints[f"mount-{hole}"]
+            mt_location = mt_joint.location
             mount_joint.connect_to(mt_joint)
 
 
