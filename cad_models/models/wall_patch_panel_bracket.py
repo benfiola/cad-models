@@ -27,7 +27,7 @@ from cad_models.common import (
     WallScrew,
     captive_nut_slot_dimensions,
     centered_point_list,
-    initialize,
+    main,
 )
 
 
@@ -113,4 +113,4 @@ class WallPatchPanelBracket(Model):
 
 
 if __name__ == "__main__":
-    initialize(WallPatchPanelBracket())
+    main(WallPatchPanelBracket())

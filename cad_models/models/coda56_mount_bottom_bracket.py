@@ -24,7 +24,7 @@ from build123d import (
     make_face,
 )
 
-from cad_models.common import Model, centered_point_list, col_major, initialize
+from cad_models.common import Model, centered_point_list, col_major, main
 from cad_models.models.coda56 import Coda56
 
 
@@ -135,6 +135,7 @@ class Coda56MountBottomBracket(Model):
             for index, location in enumerate(locations):
                 joint_location = Location(location)
                 joint_location *= Pos(Z=-bracket_thickness)
+                joint_location *= Rot(Z=180)
                 RigidJoint(f"server-rack-{index}", joint_location=joint_location)
 
             # apply fillet
@@ -142,12 +143,6 @@ class Coda56MountBottomBracket(Model):
 
         super().__init__(builder.part, **kwargs)
 
-    def mount(self, coda: Coda56):
-        for hole in range(0, 2):
-            coda_joint: RigidJoint = coda.joints[f"mount-{hole}"]
-            mount_joint: RigidJoint = self.joints[f"coda-{hole}"]
-            mount_joint.connect_to(coda_joint)
-
 
 if __name__ == "__main__":
-    initialize(Coda56MountBottomBracket())
+    main(Coda56MountBottomBracket())

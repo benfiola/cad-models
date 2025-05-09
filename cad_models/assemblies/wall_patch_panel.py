@@ -1,6 +1,6 @@
 from build123d import Compound, RigidJoint
 
-from cad_models.common import initialize
+from cad_models.common import main
 from cad_models.models.wall_patch_panel import WallPatchPanel as WallPatchPanelModel
 from cad_models.models.wall_patch_panel_bracket import WallPatchPanelBracket
 
@@ -22,4 +22,4 @@ class WallPatchPanel(Compound):
 
 
 if __name__ == "__main__":
-    initialize(WallPatchPanel())
+    main(WallPatchPanel())

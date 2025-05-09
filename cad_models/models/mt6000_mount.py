@@ -22,7 +22,7 @@ from build123d import (
     make_face,
 )
 
-from cad_models.common import Model, centered_point_list, col_major, initialize
+from cad_models.common import Model, centered_point_list, col_major, main
 from cad_models.models.mt6000 import MT6000
 
 
@@ -105,6 +105,7 @@ class MT6000MountTopBracket(Model):
             for index, location in enumerate(locations):
                 joint_location = Location(location)
                 joint_location *= Pos(Z=-bracket_thickness)
+                joint_location *= Rot(Z=180)
                 RigidJoint(f"server-rack-{index}", joint_location=joint_location)
 
             # apply fillet
@@ -112,14 +113,6 @@ class MT6000MountTopBracket(Model):
 
         super().__init__(builder.part, **kwargs)
 
-    def mount(self, mt: MT6000):
-        for hole in range(0, 2):
-            mount_joint: RigidJoint = self.joints[f"mt6000-{hole}"]
-            mount_location = mount_joint.location
-            mt_joint: RigidJoint = mt.joints[f"mount-{hole}"]
-            mt_location = mt_joint.location
-            mount_joint.connect_to(mt_joint)
-
 
 if __name__ == "__main__":
-    initialize(MT6000MountTopBracket())
+    main(MT6000MountTopBracket())

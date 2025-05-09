@@ -16,7 +16,7 @@ from build123d import (
     extrude,
 )
 
-from cad_models.common import Model, initialize
+from cad_models.common import Model, main
 
 
 class MT6000(Model):
@@ -78,4 +78,4 @@ class MT6000(Model):
 
 
 if __name__ == "__main__":
-    initialize(MT6000())
+    main(MT6000())

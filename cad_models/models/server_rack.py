@@ -1,3 +1,5 @@
+from enum import Enum
+
 from bd_warehouse.fastener import ClearanceHole
 from build123d import (
     IN,
@@ -5,19 +7,23 @@ from build123d import (
     Axis,
     Box,
     BuildPart,
-    Compound,
     Location,
     Locations,
     Plane,
     Pos,
     RigidJoint,
     Rot,
-    Solid,
     Vector,
     mirror,
 )
 
-from cad_models.common import Model, RackMountScrew, initialize
+from cad_models.common import Model, RackMountScrew, main
+
+
+class Mount(Enum):
+    Both = "both"
+    Left = "left"
+    Right = "right"
 
 
 class ServerRack(Model):
@@ -70,18 +76,14 @@ class ServerRack(Model):
                 hole = index % 2
                 left = Location(left)
                 left *= Rot(Z=90)
-                right = Location(left) * Pos(X=-left.position.X * 2)
                 RigidJoint(f"mount-{rack_u}-0-{hole}", joint_location=left)
+                right = Location(left)
+                right *= Pos(X=-left.position.X * 2)
+                right *= Rot(Z=180)
                 RigidJoint(f"mount-{rack_u}-1-{hole}", joint_location=right)
 
         super().__init__(builder.part, **kwargs)
 
-    def side_mount(self, item: Solid | Compound, rack_u: int):
-        for hole in range(0, 2):
-            rack_joint: RigidJoint = self.joints[f"mount-{rack_u}-1-{hole}"]
-            item_joint: RigidJoint = item.joints[f"server-rack-{hole}"]
-            rack_joint.connect_to(item_joint)
-
 
 if __name__ == "__main__":
-    initialize(ServerRack())
+    main(ServerRack())

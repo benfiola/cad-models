@@ -2,7 +2,7 @@ from typing import cast
 
 from build123d import Axis, Location, RigidJoint, Rot, Solid, Vector, import_step
 
-from cad_models.common import Model, initialize
+from cad_models.common import Model, main
 from cad_models.data import data_file
 
 
@@ -32,4 +32,4 @@ class KeystoneReceiver(Model):
 
 
 if __name__ == "__main__":
-    initialize(KeystoneReceiver())
+    main(KeystoneReceiver())

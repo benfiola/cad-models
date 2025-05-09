@@ -4,9 +4,13 @@ from typing import Any, Literal
 
 import ocp_vscode
 from bd_warehouse.fastener import HexNut, Nut, PanHeadScrew, Screw
-from build123d import IN, MM, Align, BuildLine, BuildSketch, Compound, Face
-from build123d import GridLocations as BaseGridLocations
 from build123d import (
+    IN,
+    MM,
+    BuildLine,
+    BuildSketch,
+    Compound,
+    Face,
     Line,
     Location,
     Part,
@@ -171,51 +175,6 @@ def captive_nut_slot_dimensions(
     return Vector(X=rect_width, Y=rect_height, Z=nut.nut_thickness)
 
 
-class GridLocations(BaseGridLocations):
-    @classmethod
-    def area_grid(
-        cls,
-        *,
-        area: VectorLike,
-        item: VectorLike,
-        grid: VectorLike,
-        align: tuple[Align, Align] = (Align.CENTER, Align.CENTER),
-    ):
-        """
-        Convenience method that produces a GridLocations object.
-
-        Calculates the GridLocations' spacing given the following set of parameters.
-
-        :param area: the dimensions of the grid in absolute size
-        :param item: the size of the item to space evenly across the grid
-        :param grid: the number of rows and columns in the grid
-        :param align: passed through to GridLocations
-        """
-        if isinstance(area, Iterable):
-            area = Vector(*area)
-        if isinstance(grid, Iterable):
-            grid = Vector(*grid)
-        if isinstance(item, Iterable):
-            item = Vector(*item)
-
-        # calculate the minimum space taken by the grid
-        min_space = Vector(item.X, item.Y)
-        min_space.X *= grid.X
-        min_space.Y *= grid.Y
-        remaining_space = area - min_space
-        if remaining_space.X < 0 or remaining_space.X < 0:
-            raise ValueError(f"insufficient area for desired grid")
-
-        spacing = Vector(item.X, item.Y)
-        if grid.X != 0:
-            spacing.X += remaining_space.X / grid.X
-        if grid.Y != 0:
-            spacing.Y += remaining_space.Y / grid.Y
-        return GridLocations(
-            spacing.X, spacing.Y, int(grid.X), int(grid.Y), align=align
-        )
-
-
 def row_major(x_dir: VectorLike | None = None, y_dir: VectorLike | None = None):
     """
     A function used as the 'key' kwarg to a sort function that sorts locations in row major order.
@@ -296,6 +255,6 @@ def centered_point_list(*points: tuple[float, float]) -> Iterable[tuple[float, f
     return to_return
 
 
-def initialize(model: Solid | Compound):
+def main(model: Solid | Compound):
     ocp_vscode.set_defaults(reset_camera=ocp_vscode.Camera.KEEP)
     ocp_vscode.show(model)

@@ -16,7 +16,7 @@ from build123d import (
     extrude,
 )
 
-from cad_models.common import Model, initialize
+from cad_models.common import Model, main
 
 
 class RouterScrew(CounterSunkScrew):
@@ -80,4 +80,4 @@ class Coda56(Model):
 
 
 if __name__ == "__main__":
-    initialize(Coda56())
+    main(Coda56())

@@ -12,6 +12,7 @@ from build123d import (
     Polyline,
     Pos,
     RigidJoint,
+    Rot,
     SlotOverall,
     Vector,
     extrude,
@@ -19,7 +20,7 @@ from build123d import (
     make_face,
 )
 
-from cad_models.common import Model, centered_point_list, col_major, initialize
+from cad_models.common import Model, centered_point_list, col_major, main
 from cad_models.models.coda56 import Coda56
 
 
@@ -95,6 +96,7 @@ class Coda56MountTopBracket(Model):
             for index, location in enumerate(locations):
                 joint_location = Location(location)
                 joint_location *= Pos(Z=-bracket_thickness)
+                joint_location *= Rot(Z=180)
                 RigidJoint(f"server-rack-{index}", joint_location=joint_location)
 
             # apply fillet
@@ -104,4 +106,4 @@ class Coda56MountTopBracket(Model):
 
 
 if __name__ == "__main__":
-    initialize(Coda56MountTopBracket())
+    main(Coda56MountTopBracket())

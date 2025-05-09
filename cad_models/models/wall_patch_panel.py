@@ -25,13 +25,7 @@ from build123d import (
     make_face,
 )
 
-from cad_models.common import (
-    Model,
-    centered_point_list,
-    col_major,
-    initialize,
-    row_major,
-)
+from cad_models.common import Model, centered_point_list, col_major, main, row_major
 from cad_models.data import data_file
 from cad_models.models.keystone_receiver import KeystoneReceiver
 
@@ -109,7 +103,7 @@ class WallPatchPanel(Model):
 
             # create keystone cutouts
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
-            with BuildSketch(face) as grid_sketch:
+            with BuildSketch(face):
                 spacing = Vector(grid_dimensions)
                 spacing.X /= grid_count.X
                 spacing.Y /= grid_count.Y
@@ -168,4 +162,4 @@ class WallPatchPanel(Model):
 
 
 if __name__ == "__main__":
-    initialize(WallPatchPanel())
+    main(WallPatchPanel())
