@@ -9,6 +9,7 @@ from build123d import GridLocations as BaseGridLocations
 from build123d import (
     Line,
     Location,
+    Part,
     Plane,
     Polyline,
     RadiusArc,
@@ -20,7 +21,10 @@ from build123d import (
 
 
 class Model(Solid):
-    pass
+    def __init__(self, item: Solid | Part, **kwargs):
+        kwargs["obj"] = item.wrapped
+        kwargs["joints"] = item.joints
+        super().__init__(**kwargs)
 
 
 class Iso:

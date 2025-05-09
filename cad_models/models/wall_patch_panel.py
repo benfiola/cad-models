@@ -158,9 +158,7 @@ class WallPatchPanel(Model):
             # fillet corners
             fillet(fillet_edges, corner_radius)
 
-        kwargs["obj"] = builder.part.wrapped
-        kwargs["joints"] = builder.part.joints
-        super().__init__(builder.part.wrapped, **kwargs)
+        super().__init__(builder.part, **kwargs)
 
 
 if __name__ == "__main__":

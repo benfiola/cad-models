@@ -139,9 +139,7 @@ class Coda56MountBottomBracket(Model):
             # apply fillet
             fillet(fillet_edges, corner_radius)
 
-        kwargs["obj"] = builder.part.wrapped
-        kwargs["joints"] = builder.part.joints
-        super().__init__(builder.part.wrapped, **kwargs)
+        super().__init__(builder.part, **kwargs)
 
     def mount(self, coda: Coda56):
         for hole in range(0, 2):

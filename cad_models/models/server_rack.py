@@ -72,9 +72,7 @@ class ServerRack(Model):
                 RigidJoint(f"mount-{rack_u}-0-{hole}", joint_location=left)
                 RigidJoint(f"mount-{rack_u}-1-{hole}", joint_location=right)
 
-        kwargs["obj"] = builder.part.wrapped
-        kwargs["joints"] = builder.part.joints
-        super().__init__(builder.part.wrapped, **kwargs)
+        super().__init__(builder.part, **kwargs)
 
     def side_mount(self, item: Solid | Compound, rack_u: int):
         for hole in range(0, 2):

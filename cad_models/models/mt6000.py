@@ -12,28 +12,26 @@ from build123d import (
     Rectangle,
     RigidJoint,
     SlotOverall,
-    Solid,
     Vector,
     extrude,
 )
 
-from cad_models.common import initialize
+from cad_models.common import Model, initialize
 
 
-class MT6000(Solid):
+class MT6000(Model):
     m_dimensions: Vector
-    hole_depth: float
-    hole_diameter: float
-    hole_slot_dimensions: Vector
     hole_spacing: Vector
+    peg_depth: float
+    peg_shaft_diameter: float
+    peg_top_diameter: float
 
     def __init__(self, **kwargs):
+        # parameters
         # dimensions of the underside of the router where the mount holes are
         dimensions = Vector(217.46 * MM, 33.84 * MM, 131.92 * MM)
-
         hole_depth = 5.4 * MM
-        hole_diameter = 11.28 * MM
-        # TODO: fix hole slot math to make sense
+        hole_diameter = 10.5 * MM
         hole_slot_dimensions = Vector(4 * MM, 6.5 * MM)
         hole_spacing = Vector(179.20 * MM, 0)
 
@@ -70,15 +68,13 @@ class MT6000(Solid):
                 location *= Pos(Y=-hole_depth)
                 RigidJoint(f"mount-{hole}", joint_location=location)
 
-        kwargs["obj"] = builder.part.wrapped
-        kwargs["joints"] = builder.joints
-        super().__init__(**kwargs)
+        super().__init__(builder.part, **kwargs)
 
-        self.hole_depth = hole_depth
-        self.hole_diameter = hole_diameter
-        self.hole_slot_dimensions = hole_slot_dimensions
         self.hole_spacing = hole_spacing
         self.m_dimensions = dimensions
+        self.peg_depth = hole_depth
+        self.peg_shaft_diameter = hole_slot_dimensions.X - (1 * MM)
+        self.peg_top_diameter = hole_diameter - (1.5 * MM)
 
 
 if __name__ == "__main__":

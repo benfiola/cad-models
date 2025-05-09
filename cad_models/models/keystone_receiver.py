@@ -19,14 +19,12 @@ class KeystoneReceiver(Model):
 
         # create joint
         joint_location = Location(front_face.position_at(0.5, 0.5))
-        joint = RigidJoint(
+        RigidJoint(
             "keystone",
             to_part=solid,
             joint_location=joint_location,
         )
 
-        kwargs["obj"] = solid.wrapped
-        kwargs["joints"] = solid.joints
         super().__init__(solid, **kwargs)
 
         # calculate dimensions from faces

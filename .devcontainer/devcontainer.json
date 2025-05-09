@@ -42,7 +42,8 @@
         "python.analysis.typeCheckingMode": "basic",
         "[python]": {
           "editor.defaultFormatter": "ms-python.black-formatter"
-        }
+        },
+        "OcpCadViewer.view.reset_camera": "KEEP"
       }
     }
   },

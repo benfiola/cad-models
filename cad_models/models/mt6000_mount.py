@@ -36,7 +36,7 @@ class MT6000MountTopBracket(Model):
         hole_offset = 3 * MM
         hole_spacing = 31.75 * MM
         modem = MT6000()
-        modem_inset = 50 * MM
+        modem_inset = 25 * MM
 
         with BuildPart() as builder:
             # create bracket (via top-down profile)
@@ -73,19 +73,19 @@ class MT6000MountTopBracket(Model):
             with BuildSketch(face):
                 spacing = modem.hole_spacing.X
                 with GridLocations(spacing, 0, 2, 1) as grid_locations:
-                    Circle(modem.hole_slot_dimensions.X / 2)
+                    Circle(modem.peg_shaft_diameter / 2)
                     post_locations = grid_locations.locations
-            solids = extrude(amount=modem.hole_depth / 2)
+            solids = extrude(amount=modem.peg_depth / 2)
             faces = solids.faces().filter_by(Axis.X).sort_by(Axis.X)[-2:]
             for face in faces:
                 with BuildSketch(face):
-                    Circle(modem.hole_diameter / 2)
-                extrude(amount=modem.hole_depth / 2)
+                    Circle(modem.peg_top_diameter / 2)
+                extrude(amount=modem.peg_depth / 2)
 
             # create joints
             for hole, post_location in enumerate(post_locations):
                 location = Location(post_location.position)
-                location *= Pos(X=modem.hole_depth)
+                location *= Pos(X=modem.peg_depth)
                 # TODO: set correct orientation of all joints in project
                 location *= Rot(Z=90)
                 RigidJoint(f"mt6000-{hole}", joint_location=location)
@@ -110,9 +110,7 @@ class MT6000MountTopBracket(Model):
             # apply fillet
             fillet(fillet_edges, corner_radius)
 
-        kwargs["obj"] = builder.part.wrapped
-        kwargs["joints"] = builder.part.joints
-        super().__init__(builder.part.wrapped, **kwargs)
+        super().__init__(builder.part, **kwargs)
 
     def mount(self, mt: MT6000):
         for hole in range(0, 2):

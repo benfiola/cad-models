@@ -11,12 +11,11 @@ from build123d import (
     Pos,
     Rectangle,
     RigidJoint,
-    Solid,
     Vector,
     extrude,
 )
 
-from cad_models.common import initialize
+from cad_models.common import Model, initialize
 
 
 class RouterScrew(CounterSunkScrew):
@@ -26,7 +25,7 @@ class RouterScrew(CounterSunkScrew):
         )
 
 
-class Coda56(Solid):
+class Coda56(Model):
     c_dimensions: Vector
     screw: Screw
     standoff_dimensions: Vector
@@ -69,9 +68,7 @@ class Coda56(Solid):
                 location = Location(location.position)
                 RigidJoint(f"mount-{index}", joint_location=location)
 
-        kwargs["obj"] = builder.part.wrapped
-        kwargs["joints"] = builder.part.joints
-        super().__init__(**kwargs)
+        super().__init__(builder.part, **kwargs)
 
         self.c_dimensions = dimensions
         self.screw = screw
