@@ -11,6 +11,7 @@ from build123d import (
     Pos,
     Rectangle,
     RigidJoint,
+    Rot,
     Vector,
     extrude,
 )
@@ -65,7 +66,8 @@ class Coda56(Model):
                 location *= offset
                 with Locations(location):
                     ClearanceHole(screw, depth=screw.length, counter_sunk=False)
-                location = Location(location.position)
+                location = Location(location)
+                location *= Rot(Y=180)
                 RigidJoint(f"mount-{index}", joint_location=location)
 
         super().__init__(builder.part, **kwargs)

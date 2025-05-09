@@ -33,7 +33,7 @@ class MT6000(Model):
         hole_depth = 5.4 * MM
         hole_diameter = 10.5 * MM
         hole_slot_dimensions = Vector(4 * MM, 6.5 * MM)
-        hole_spacing = Vector(179.20 * MM, 0)
+        hole_spacing = Vector(180 * MM, 0)
 
         with BuildPart() as builder:
             # create router box

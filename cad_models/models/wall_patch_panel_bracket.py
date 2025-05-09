@@ -14,6 +14,7 @@ from build123d import (
     Polyline,
     Pos,
     RigidJoint,
+    Rot,
     Vector,
     extrude,
     make_face,
@@ -90,7 +91,8 @@ class WallPatchPanelBracket(Model):
                     )
 
                 # joint
-                location = Location(face.position_at(0.5, 0.5))
+                location = Location(face.location_at(0.5, 0.5))
+                location *= Rot(Z=90)
                 RigidJoint(f"mount-{index}", joint_location=location)
 
                 # slot

@@ -115,7 +115,7 @@ class Coda56MountBottomBracket(Model):
                     ClearanceHole(router.screw, depth=router.screw.length)
 
                 # joint
-                location = Location(hole_location.position)
+                location = Location(hole_location)
                 location *= Pos(Z=-router.standoff_dimensions.Z)
                 RigidJoint(f"coda-{hole}", joint_location=location)
 
@@ -133,7 +133,8 @@ class Coda56MountBottomBracket(Model):
             extrude(amount=-bracket_thickness, mode=Mode.SUBTRACT)
             locations = sorted(hole_locations, key=col_major(y_dir=(0, 0, -1)))
             for index, location in enumerate(locations):
-                joint_location = Location(location.position) * Pos(Y=bracket_thickness)
+                joint_location = Location(location)
+                joint_location *= Pos(Z=-bracket_thickness)
                 RigidJoint(f"server-rack-{index}", joint_location=joint_location)
 
             # apply fillet

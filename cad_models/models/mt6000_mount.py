@@ -86,7 +86,6 @@ class MT6000MountTopBracket(Model):
             for hole, post_location in enumerate(post_locations):
                 location = Location(post_location.position)
                 location *= Pos(X=modem.peg_depth)
-                # TODO: set correct orientation of all joints in project
                 location *= Rot(Z=90)
                 RigidJoint(f"mt6000-{hole}", joint_location=location)
 
@@ -104,7 +103,8 @@ class MT6000MountTopBracket(Model):
             extrude(amount=-bracket_thickness, mode=Mode.SUBTRACT)
             locations = sorted(hole_locations, key=col_major(y_dir=(0, 0, -1)))
             for index, location in enumerate(locations):
-                joint_location = Location(location.position) * Pos(Y=bracket_thickness)
+                joint_location = Location(location)
+                joint_location *= Pos(Z=-bracket_thickness)
                 RigidJoint(f"server-rack-{index}", joint_location=joint_location)
 
             # apply fillet

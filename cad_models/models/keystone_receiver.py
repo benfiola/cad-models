@@ -1,6 +1,6 @@
 from typing import cast
 
-from build123d import Axis, Location, RigidJoint, Solid, Vector, import_step
+from build123d import Axis, Location, RigidJoint, Rot, Solid, Vector, import_step
 
 from cad_models.common import Model, initialize
 from cad_models.data import data_file
@@ -18,12 +18,9 @@ class KeystoneReceiver(Model):
         bottom_faces = solid.faces().filter_by(Axis.Z).sort_by(Axis.Z)[:3]
 
         # create joint
-        joint_location = Location(front_face.position_at(0.5, 0.5))
-        RigidJoint(
-            "keystone",
-            to_part=solid,
-            joint_location=joint_location,
-        )
+        joint_location = Location(front_face.location_at(0.5, 0.5))
+        joint_location *= Rot(Z=90)
+        RigidJoint("keystone", to_part=solid, joint_location=joint_location)
 
         super().__init__(solid, **kwargs)
 

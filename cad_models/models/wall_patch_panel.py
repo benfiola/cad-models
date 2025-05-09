@@ -15,6 +15,7 @@ from build123d import (
     Pos,
     Rectangle,
     RigidJoint,
+    Rot,
     SlotOverall,
     Text,
     Vector,
@@ -93,10 +94,14 @@ class WallPatchPanel(Model):
             locations = sorted(mount_hole_locations, key=col_major())
             pairs = zip(locations[::2], locations[1::2])
             for index, (top, bottom) in enumerate(pairs):
-                top = Location(top.position) * Pos(Y=ear_dimensions.Z)
-                bottom = Location(bottom.position) * Pos(Y=ear_dimensions.Z)
-                RigidJoint(f"mount-{index}-top", joint_location=top)
-                RigidJoint(f"mount-{index}-bottom", joint_location=bottom)
+                top = Location(top)
+                top *= Pos(Z=-ear_dimensions.Z)
+                top *= Rot(Z=180)
+                RigidJoint(f"mount-{index}-0", joint_location=top)
+                bottom = Location(bottom)
+                bottom *= Pos(Z=-ear_dimensions.Z)
+                bottom *= Rot(Z=180)
+                RigidJoint(f"mount-{index}-1", joint_location=bottom)
 
             # create base keystone for cutouts and future attachments
             with BuildPart(mode=Mode.PRIVATE):
@@ -123,7 +128,8 @@ class WallPatchPanel(Model):
             for index, keystone_location in enumerate(locations):
                 x = int(index / grid_count.Y)
                 y = index % int(grid_count.Y)
-                joint_location = Location(keystone_location.position)
+                joint_location = Location(keystone_location)
+                joint_location *= Rot(Z=180)
                 cutout_joint = RigidJoint(
                     f"keystone-{x}-{y}", joint_location=joint_location
                 )
@@ -146,7 +152,7 @@ class WallPatchPanel(Model):
                     if not label:
                         continue
                     location = Location(keystone_location.position)
-                    location *= Pos(Y=base_keystone.kr_dimensions.Z / 2)
+                    location *= Pos(Y=base_keystone.kr_dimensions.Y / 2)
                     with Locations(location):
                         Text(
                             label,

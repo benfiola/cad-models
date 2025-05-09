@@ -11,6 +11,7 @@ from build123d import (
     Plane,
     Pos,
     RigidJoint,
+    Rot,
     Solid,
     Vector,
     mirror,
@@ -67,7 +68,8 @@ class ServerRack(Model):
             for index, left in enumerate(hole_locations):
                 rack_u = int(index / 2)
                 hole = index % 2
-                left = Location(left.position)
+                left = Location(left)
+                left *= Rot(Z=90)
                 right = Location(left) * Pos(X=-left.position.X * 2)
                 RigidJoint(f"mount-{rack_u}-0-{hole}", joint_location=left)
                 RigidJoint(f"mount-{rack_u}-1-{hole}", joint_location=right)

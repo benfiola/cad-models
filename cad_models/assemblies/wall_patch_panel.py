@@ -12,7 +12,7 @@ class WallPatchPanel(Compound):
         brackets = []
         for index in range(0, 2):
             bracket = WallPatchPanelBracket()
-            for position in ["bottom", "top"]:
+            for position in range(0, 2):
                 bracket_joint: RigidJoint = bracket.joints[f"mount-{position}"]
                 panel_joint: RigidJoint = panel.joints[f"mount-{index}-{position}"]
                 panel_joint.connect_to(bracket_joint)
