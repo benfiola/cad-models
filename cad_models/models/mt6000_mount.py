@@ -28,7 +28,7 @@ class MT6000MountTopBracket(Model):
         # parameters
         bracket_thickness = 5.0 * MM
         corner_radius = 3.0 * MM
-        ear_dimensions = Vector(28.0 * MM, 41.35 * MM, 0)
+        ear_dimensions = Vector(28.0 * MM, 44.35 * MM, 0)
         hole_dimensions = Vector(12.0 * MM, 6.0 * MM)
         hole_offset = 3 * MM
         hole_spacing = 31.75 * MM
