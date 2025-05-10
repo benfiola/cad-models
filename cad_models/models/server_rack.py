@@ -27,16 +27,15 @@ class Mount(Enum):
 
 
 class ServerRack(Model):
-    def __init__(self, **kwargs):
+    def __init__(self, u: int = 16, **kwargs):
         # parameters
-        rack_us = 16
         arm_distance = 19 * IN
         arm_dimensions = Vector(25.0 * MM, 0, 18.11 * IN)
         hole_offset = 3 * MM
         mount_screw = RackMountScrew()
 
         # derived values
-        arm_dimensions.Y = rack_us * 1.75 * IN
+        arm_dimensions.Y = u * 1.75 * IN
 
         with BuildPart() as builder:
             # create left arm
@@ -55,7 +54,7 @@ class ServerRack(Model):
             base *= Pos(Y=hole_offset)
             base *= Pos(Y=mount_screw.thread_diameter / 2)
             holes = []
-            for rack_u in range(rack_us):
+            for rack_u in range(u):
                 holes.extend([base * Pos(X=0.25 * IN), base * Pos(X=1.50 * IN)])
                 base *= Pos(X=1.75 * IN)
             with Locations(holes) as locations:

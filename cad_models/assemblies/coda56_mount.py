@@ -10,17 +10,17 @@ from cad_models.models.server_rack import ServerRack
 class Coda56Mount(Compound):
 
     def __init__(self):
-        server_rack = ServerRack(color=Color("black", alpha=0.3))
+        server_rack = ServerRack(u=6, color=Color("black", alpha=0.3))
 
         top_bracket = Coda56MountTopBracket()
         for hole in range(0, 2):
-            rack_joint: RigidJoint = server_rack.joints[f"mount-3-1-{hole}"]
+            rack_joint: RigidJoint = server_rack.joints[f"mount-1-1-{hole}"]
             item_joint: RigidJoint = top_bracket.joints[f"server-rack-{hole}"]
             rack_joint.connect_to(item_joint)
 
         bottom_bracket = Coda56MountBottomBracket()
         for hole in range(0, 2):
-            rack_joint: RigidJoint = server_rack.joints[f"mount-6-1-{hole}"]
+            rack_joint: RigidJoint = server_rack.joints[f"mount-4-1-{hole}"]
             item_joint: RigidJoint = bottom_bracket.joints[f"server-rack-{hole}"]
             rack_joint.connect_to(item_joint)
 

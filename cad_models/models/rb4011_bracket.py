@@ -40,7 +40,7 @@ class RB4011Bracket(Model):
         # parameters
         bracket_thickness = 4 * MM
         corner_radius = 3 * MM
-        dimensions = Vector(150 * MM, 0, 100 * MM)
+        dimensions = Vector(123.3 * MM, 0, 128 * MM)
         ear_dimensions = Vector(28.0 * MM, 44.35 * MM, 0)
         ear_hole_dimensions = Vector(12 * MM, 6 * MM)
         ear_hole_spacing = 31.75 * MM

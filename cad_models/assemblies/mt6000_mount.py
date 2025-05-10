@@ -8,11 +8,11 @@ from cad_models.models.server_rack import ServerRack
 
 class MT6000Mount(Compound):
     def __init__(self):
-        server_rack = ServerRack(color=Color("black", alpha=0.3))
+        server_rack = ServerRack(u=3, color=Color("black", alpha=0.3))
 
         bracket = MT6000MountTopBracket()
         for hole in range(0, 2):
-            rack_joint: RigidJoint = server_rack.joints[f"mount-3-1-{hole}"]
+            rack_joint: RigidJoint = server_rack.joints[f"mount-1-1-{hole}"]
             bracket_joint: RigidJoint = bracket.joints[f"server-rack-{hole}"]
             rack_joint.connect_to(bracket_joint)
 

@@ -43,6 +43,8 @@
         "[python]": {
           "editor.defaultFormatter": "ms-python.black-formatter"
         },
+        "OcpCadViewer.advanced.watchCommands": "from ocp_vscode import show_all, get_port; show_all(locals(), port=get_port(), render_joints=True, _visual_debug=True)",
+        "OcpCadViewer.view.dark": true,
         "OcpCadViewer.view.reset_camera": "KEEP"
       }
     }
