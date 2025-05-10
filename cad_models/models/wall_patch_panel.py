@@ -120,12 +120,10 @@ class WallPatchPanel(Model):
             # attach keystones
             locations = sorted(keystone_locations, key=row_major(y_dir=(0, 0, -1)))
             for index, keystone_location in enumerate(locations):
-                x = int(index / grid_count.Y)
-                y = index % int(grid_count.Y)
                 joint_location = Location(keystone_location)
                 joint_location *= Rot(Z=180)
                 cutout_joint = RigidJoint(
-                    f"keystone-{x}-{y}", joint_location=joint_location
+                    f"keystone-{index}", joint_location=joint_location
                 )
                 keystone = copy(base_keystone)
                 joint: RigidJoint = keystone.joints["keystone"]

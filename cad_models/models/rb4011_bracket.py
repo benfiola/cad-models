@@ -1,5 +1,6 @@
 from bd_warehouse.fastener import ClearanceHole
 from build123d import (
+    IN,
     MM,
     Align,
     Axis,
@@ -33,47 +34,52 @@ from cad_models.common import (
     main,
     row_major,
 )
+from cad_models.models.rb4011 import RB4011
 
 
 class RB4011Bracket(Model):
     def __init__(self, **kwargs):
         # parameters
+        bracket_dimensions = Vector(0, 44.35 * MM, 0)
         bracket_thickness = 4 * MM
         corner_radius = 3 * MM
-        dimensions = Vector(123.3 * MM, 0, 128 * MM)
-        ear_dimensions = Vector(28.0 * MM, 44.35 * MM, 0)
+        ear_dimensions = Vector(15 * MM, 0, 0)
         ear_hole_dimensions = Vector(12 * MM, 6 * MM)
         ear_hole_spacing = 31.75 * MM
-        inner_bracket_thickness = 6 * MM
+        interface_thickness = 6 * MM
         interface_nut = RackInterfaceNut()
         interface_hole_count = Vector(4, 2)
         interface_hole_spacing = Vector(20 * MM, 20 * MM)
+        router = RB4011()
 
         # derived values
-        dimensions.Y = ear_dimensions.Y
+        tray_width = (interface_thickness * 2) + router.r_dimensions.X
+        bracket_dimensions.X = ((19 * IN) - tray_width) / 2
+        bracket_dimensions.Z = (bracket_thickness * 2) + router.r_dimensions.Z
+        ear_dimensions.Y = bracket_dimensions.Y
         ear_dimensions.Z = bracket_thickness
 
         with BuildPart() as builder:
             # create bracket profile (via top-down view)
             with BuildSketch(Plane.XY):
                 with BuildLine():
+                    bd = bracket_dimensions
                     bt = bracket_thickness
-                    d = dimensions
                     ed = ear_dimensions
-                    ibt = inner_bracket_thickness
+                    it = interface_thickness
 
                     points = centered_point_list(
                         (0, 0),
                         (0, bt),
-                        (ed.X + d.X, bt),
-                        (ed.X + d.X, bt + d.Z),
-                        (ed.X + d.X + ibt, bt + d.Z),
-                        (ed.X + d.X + ibt, 0),
+                        (ed.X + bd.X - it, bt),
+                        (ed.X + bd.X - it, bd.Z),
+                        (ed.X + bd.X, bd.Z),
+                        (ed.X + bd.X, 0),
                         (0, 0),
                     )
                     Polyline(*points)
                 make_face()
-            extrude(amount=dimensions.Y)
+            extrude(amount=bracket_dimensions.Y)
 
             fillet_edges = builder.part.edges().filter_by(Axis.Y).sort_by(Axis.Y)[:2]
 
@@ -83,13 +89,18 @@ class RB4011Bracket(Model):
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
             faces = face.split(split_plane, keep=Keep.BOTH)
             face = faces.faces().sort_by(Axis.X)[-1]
-            split_plane = split_plane.offset(-dimensions.X)
+            split_plane = split_plane.offset(
+                -(bracket_dimensions.X - interface_thickness)
+            )
             faces = face.split(split_plane, keep=Keep.BOTH)
             face = faces.faces().sort_by(Axis.X)[0]
-            mirror_plane = Plane(face).offset(-(dimensions.Y / 2))
+            mirror_plane = Plane(face).offset(-(bracket_dimensions.Y / 2))
             with BuildSketch(face) as sketch:
                 location = Location((0, -(bracket_thickness / 2)))
-                with Locations(location):
+                with Locations(location) as locs:
+                    dimensions = Vector(bracket_dimensions)
+                    dimensions.X -= interface_thickness
+                    dimensions.Z -= bracket_thickness
                     Triangle(
                         a=dimensions.X,
                         b=dimensions.Z,
@@ -114,14 +125,13 @@ class RB4011Bracket(Model):
                 key=row_major(x_dir=(0, 1, 0), y_dir=(0, 0, -1)),
             )
             for index, interface_hole_location in enumerate(interface_hole_locations):
-                x = index % interface_hole_count.X
-                y = index / interface_hole_count.X
                 location = interface_hole_location
                 with Locations(location):
                     ClearanceHole(interface_nut, captive_nut=True)
                 location = Location(interface_hole_location)
+                location *= Pos(Z=-interface_thickness)
                 location *= Rot(X=180)
-                RigidJoint(f"interface-{x}-{y}", joint_location=interface_hole_location)
+                RigidJoint(f"interface-{index}", joint_location=location)
 
             # create ear holes and joints
             split_plane = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[0]
@@ -134,12 +144,14 @@ class RB4011Bracket(Model):
                     SlotOverall(ear_hole_dimensions.X, ear_hole_dimensions.Y)
                     ear_hole_locations = grid_locations.locations
             extrude(amount=-ear_dimensions.Z, mode=Mode.SUBTRACT)
-            locations = sorted(ear_hole_locations, key=col_major(y_dir=(0, 0, -1)))
-            for index, location in enumerate(locations):
-                joint_location = Location(location)
-                joint_location *= Pos(Z=-bracket_thickness)
-                joint_location *= Rot(Z=180)
-                RigidJoint(f"server-rack-{index}", joint_location=joint_location)
+            ear_hole_locations = sorted(
+                ear_hole_locations, key=col_major(y_dir=(0, 0, -1))
+            )
+            for index, ear_hole_location in enumerate(ear_hole_locations):
+                location = Location(ear_hole_location)
+                location *= Pos(Z=-bracket_thickness)
+                location *= Rot(Z=180)
+                RigidJoint(f"server-rack-{index}", joint_location=location)
 
             # fillet edges
             fillet(fillet_edges, corner_radius)

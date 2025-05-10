@@ -30,8 +30,8 @@ class ServerRack(Model):
     def __init__(self, u: int = 16, **kwargs):
         # parameters
         arm_distance = 19 * IN
-        arm_dimensions = Vector(25.0 * MM, 0, 18.11 * IN)
-        hole_offset = 3 * MM
+        arm_dimensions = Vector(26.5 * MM, 0, 18.11 * IN)
+        hole_offset = 5 * MM
         mount_screw = RackMountScrew()
 
         # derived values
@@ -50,9 +50,9 @@ class ServerRack(Model):
 
             # create mount holes
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
-            base = face.location_at(1.0, 0.0)
-            base *= Pos(Y=hole_offset)
-            base *= Pos(Y=mount_screw.thread_diameter / 2)
+            base = face.location_at(1.0, 1.0)
+            base *= Pos(Y=-hole_offset)
+            base *= Pos(Y=-(mount_screw.thread_diameter / 2))
             holes = []
             for rack_u in range(u):
                 holes.extend([base * Pos(X=0.25 * IN), base * Pos(X=1.50 * IN)])
