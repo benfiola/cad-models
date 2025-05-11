@@ -34,7 +34,7 @@ from cad_models.common import (
     main,
     row_major,
 )
-from cad_models.models.rb4011 import RB4011
+from cad_models.models.rb4011_tray import RB4011Tray
 
 
 class RB4011Bracket(Model):
@@ -50,12 +50,11 @@ class RB4011Bracket(Model):
         interface_nut = RackInterfaceNut()
         interface_hole_count = Vector(4, 2)
         interface_hole_spacing = Vector(20 * MM, 20 * MM)
-        router = RB4011()
+        tray = RB4011Tray()
 
         # derived values
-        tray_width = (interface_thickness * 2) + router.r_dimensions.X
-        bracket_dimensions.X = ((19 * IN) - tray_width) / 2
-        bracket_dimensions.Z = (bracket_thickness * 2) + router.r_dimensions.Z
+        bracket_dimensions.X = ((19 * IN) - tray.t_dimensions.X) / 2
+        bracket_dimensions.Z = tray.t_dimensions.Z
         ear_dimensions.Y = bracket_dimensions.Y
         ear_dimensions.Z = bracket_thickness
 

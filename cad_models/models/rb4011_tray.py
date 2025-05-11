@@ -23,6 +23,8 @@ from cad_models.models.rb4011 import RB4011
 
 
 class RB4011Tray(Model):
+    t_dimensions: Vector
+
     def __init__(self, **kwargs):
         router = RB4011()
         interface_thickness = 6.0 * MM
@@ -109,6 +111,8 @@ class RB4011Tray(Model):
             RigidJoint("router", joint_location=location)
 
         super().__init__(builder.part, **kwargs)
+
+        self.t_dimensions = tray_dimensions
 
 
 if __name__ == "__main__":
