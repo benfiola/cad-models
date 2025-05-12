@@ -39,7 +39,7 @@ class ServerRack(Model):
 
         with BuildPart() as builder:
             # create left arm
-            location = Pos(-(arm_distance + arm_dimensions.X) / 2, 0, 0)
+            location = Pos(-arm_distance / 2, 0, 0)
             with Locations(location):
                 # create arm box
                 Box(
