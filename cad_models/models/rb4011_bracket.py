@@ -54,8 +54,8 @@ class RB4011Bracket(Model):
         tray = RB4011Tray()
 
         # derived values
-        bracket_dimensions.X = ((19 * IN) - tray.t_dimensions.X) / 2
-        bracket_dimensions.Z = tray.t_dimensions.Z
+        bracket_dimensions.X = ((19 * IN) - tray.dimensions.X) / 2
+        bracket_dimensions.Z = tray.dimensions.Z
         ear_dimensions.Y = bracket_dimensions.Y
         ear_dimensions.Z = bracket_thickness
 

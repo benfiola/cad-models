@@ -44,7 +44,7 @@ class Coda56MountTopBracket(Model):
                     bt = bracket_thickness
                     ed = ear_dimensions
                     hl = hook_length
-                    rd = router.c_dimensions
+                    rd = router.dimensions
                     ri = router_inset
 
                     points = centered_point_list(

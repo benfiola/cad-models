@@ -23,7 +23,7 @@ from cad_models.models.rb4011 import RB4011
 
 
 class RB4011Tray(Model):
-    t_dimensions: Vector
+    dimensions: Vector
 
     def __init__(self, **kwargs):
         router = RB4011()
@@ -36,8 +36,8 @@ class RB4011Tray(Model):
         tray_thickness = 4.0 * MM
 
         # derived values
-        tray_dimensions.X = (interface_thickness * 2) + router.r_dimensions.X
-        tray_dimensions.Z = (tray_thickness * 2) + router.r_dimensions.Z
+        tray_dimensions.X = (interface_thickness * 2) + router.dimensions.X
+        tray_dimensions.Z = (tray_thickness * 2) + router.dimensions.Z
 
         with BuildPart() as builder:
             # make box
@@ -97,7 +97,7 @@ class RB4011Tray(Model):
                 location = Location((0, face.width / 2))
                 location *= Pos(Y=-lip_thickness)
                 with Locations(location):
-                    dimensions = Vector(router.r_dimensions.X, router.r_dimensions.Y)
+                    dimensions = Vector(router.dimensions.X, router.dimensions.Y)
                     dimensions.X -= lip_thickness * 2
                     dimensions.Y -= lip_thickness
                     Rectangle(
@@ -112,7 +112,7 @@ class RB4011Tray(Model):
 
         super().__init__(builder.part, **kwargs)
 
-        self.t_dimensions = tray_dimensions
+        self.dimensions = tray_dimensions
 
 
 if __name__ == "__main__":

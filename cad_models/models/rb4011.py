@@ -15,7 +15,7 @@ from cad_models.common import Model, main
 
 
 class RB4011(Model):
-    r_dimensions: Vector
+    dimensions: Vector
 
     def __init__(self, **kwargs):
         # parameters
@@ -37,7 +37,7 @@ class RB4011(Model):
 
         super().__init__(builder.part, **kwargs)
 
-        self.r_dimensions = dimensions
+        self.dimensions = dimensions
 
 
 if __name__ == "__main__":

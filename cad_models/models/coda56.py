@@ -27,7 +27,7 @@ class RouterScrew(CounterSunkScrew):
 
 
 class Coda56(Model):
-    c_dimensions: Vector
+    dimensions: Vector
     screw: Screw
     standoff_dimensions: Vector
     standoff_hole_offset: float
@@ -72,7 +72,7 @@ class Coda56(Model):
 
         super().__init__(builder.part, **kwargs)
 
-        self.c_dimensions = dimensions
+        self.dimensions = dimensions
         self.screw = screw
         self.standoff_dimensions = standoff_dimensions
         self.standoff_hole_offset = standoff_hole_offset

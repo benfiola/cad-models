@@ -20,7 +20,7 @@ from cad_models.common import Model, main
 
 
 class MT6000(Model):
-    m_dimensions: Vector
+    dimensions: Vector
     hole_spacing: Vector
     peg_depth: float
     peg_shaft_diameter: float
@@ -71,7 +71,7 @@ class MT6000(Model):
         super().__init__(builder.part, **kwargs)
 
         self.hole_spacing = hole_spacing
-        self.m_dimensions = dimensions
+        self.dimensions = dimensions
         self.peg_depth = hole_depth
         self.peg_shaft_diameter = hole_slot_dimensions.X - (1 * MM)
         self.peg_top_diameter = hole_diameter - (1.5 * MM)

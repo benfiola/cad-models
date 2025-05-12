@@ -111,7 +111,7 @@ class WallPatchPanel(Model):
                     spacing.X, spacing.Y, int(grid_count.X), int(grid_count.Y)
                 ) as grid_locations:
                     Rectangle(
-                        base_keystone.kr_dimensions.X, base_keystone.kr_dimensions.Y
+                        base_keystone.dimensions.X, base_keystone.dimensions.Y
                     )
                     keystone_locations = grid_locations.locations
                     keystone_local_locations = grid_locations.local_locations
@@ -144,7 +144,7 @@ class WallPatchPanel(Model):
                     if not label:
                         continue
                     location = Location(keystone_location.position)
-                    location *= Pos(Y=base_keystone.kr_dimensions.Y / 2)
+                    location *= Pos(Y=base_keystone.dimensions.Y / 2)
                     with Locations(location):
                         Text(
                             label,

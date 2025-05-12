@@ -44,7 +44,7 @@ class MT6000MountTopBracket(Model):
                 with BuildLine():
                     bt = bracket_thickness
                     ed = ear_dimensions
-                    md = modem.m_dimensions
+                    md = modem.dimensions
                     mi = modem_inset
 
                     points = centered_point_list(

@@ -7,7 +7,7 @@ from cad_models.data import data_file
 
 
 class KeystoneReceiver(Model):
-    kr_dimensions: Vector
+    dimensions: Vector
 
     def __init__(self, **kwargs):
         solid: Solid = cast(Solid, import_step(data_file("keystone-receiver.step")))
@@ -28,7 +28,7 @@ class KeystoneReceiver(Model):
         width = 0.0
         for face in bottom_faces:
             width += face.length
-        self.kr_dimensions = Vector(front_face.length, front_face.width, width)
+        self.dimensions = Vector(front_face.length, front_face.width, width)
 
 
 if __name__ == "__main__":

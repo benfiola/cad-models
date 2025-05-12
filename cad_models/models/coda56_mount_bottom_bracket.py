@@ -47,7 +47,7 @@ class Coda56MountBottomBracket(Model):
                 with BuildLine():
                     bt = bracket_thickness
                     ed = ear_dimensions
-                    rd = router.c_dimensions
+                    rd = router.dimensions
                     ri = router_inset
 
                     points = centered_point_list(
@@ -73,21 +73,21 @@ class Coda56MountBottomBracket(Model):
                 location = Location((0, 0))
                 location *= Pos(X=face.length / 2, Y=-face.width / 2)
                 with Locations(location):
-                    width = (bracket_thickness * 2) + router.c_dimensions.Z
+                    width = (bracket_thickness * 2) + router.dimensions.Z
                     Rectangle(width, stand_thickness, align=(Align.MAX, Align.MIN))
-            stand = extrude(amount=router.c_dimensions.X)
+            stand = extrude(amount=router.dimensions.X)
 
             # create stand ribs
             face = stand.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
             front_plane = Plane(face, x_dir=(1, 0, 0))
             back_plane = front_plane.offset(
-                -(router.c_dimensions.Z + bracket_thickness)
+                -(router.dimensions.Z + bracket_thickness)
             )
             for plane in [front_plane, back_plane]:
                 with BuildSketch(plane):
-                    location = (router.c_dimensions.X / 2, stand_thickness / 2)
+                    location = (router.dimensions.X / 2, stand_thickness / 2)
                     with Locations(location):
-                        a = router.c_dimensions.X
+                        a = router.dimensions.X
                         c = ear_dimensions.Y - stand_thickness
                         Triangle(a=a, B=90, c=c, align=(Align.MAX, Align.MIN))
                 extrude(amount=-bracket_thickness)
