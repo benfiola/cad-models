@@ -7,7 +7,7 @@ from cad_models.models.rb4011_tray import RB4011Tray
 from cad_models.models.server_rack import ServerRack
 
 
-class Coda56Mount(Compound):
+class RB4011Mount(Compound):
     def __init__(self):
         server_rack = ServerRack(u=3, color=Color("black", alpha=0.3))
 
@@ -46,4 +46,4 @@ class Coda56Mount(Compound):
 
 
 if __name__ == "__main__":
-    main(Coda56Mount())
+    main(RB4011Mount())

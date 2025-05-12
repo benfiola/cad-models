@@ -63,7 +63,7 @@ class RB4011Tray(Model):
             for side, face in enumerate(faces):
                 split_faces = face.split(split_plane, keep=Keep.BOTH)
                 face = split_faces.faces().sort_by(Axis.Z)[0]
-                with BuildSketch(face):
+                with BuildSketch(face, mode=Mode.PRIVATE):
                     count = interface_hole_count
                     spacing = Vector(interface_hole_spacing)
                     with GridLocations(
