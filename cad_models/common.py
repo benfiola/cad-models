@@ -1,30 +1,44 @@
 import math
-from collections.abc import Iterable
-from typing import Any, Literal
+from typing import Any, Iterable, Literal
 
 import ocp_vscode
-from bd_warehouse.fastener import HexNut, Nut, PanHeadScrew, Screw
+from bd_warehouse.fastener import HexNut, Nut, PanHeadScrew, Screw, SquareNut
 from build123d import (
     IN,
     MM,
+    BasePartObject,
     BuildLine,
+    BuildPart,
     BuildSketch,
     Compound,
     Face,
     Line,
     Location,
+    Locations,
+    Mode,
     Part,
     Plane,
     Polyline,
+    Pos,
     RadiusArc,
+    Rectangle,
+    RotationLike,
     Solid,
     Vector,
     VectorLike,
+    extrude,
     make_face,
 )
 
 
 class Model(Solid):
+    """
+    Sold is subclassed to:
+
+    * Streamline kwargs processing
+    * Help identify user-created models in the project (- useful for building a CLI)
+    """
+
     def __init__(self, item: Solid | Part, **kwargs):
         kwargs["obj"] = item.wrapped
         kwargs["joints"] = item.joints
@@ -32,6 +46,10 @@ class Model(Solid):
 
 
 class Iso:
+    """
+    Constants that help define the various ISO measurement parameters
+    """
+
     HeadDiameter: Literal["dk"] = "dk"
     HeadHeight: Literal["k"] = "k"
     HeadRadius: Literal["rf"] = "rf"
@@ -160,19 +178,48 @@ class RackInterfaceNut(HexNut):
         super().__init__(**kwargs)
 
 
-def captive_nut_slot_dimensions(
-    nut: Nut, fit: Literal["Close"] | Literal["Normal"] | Literal["Loose"] = "Normal"
-) -> Vector:
-    """
-    Snippet taken from bd_warehouse.fasteners._make_fastener_hole.
+class CaptiveNutSlot(BasePartObject):
+    def __init__(
+        self,
+        nut: Nut,
+        fit: Literal["Close"] | Literal["Normal"] | Literal["Loose"] = "Normal",
+        mode: Mode = Mode.SUBTRACT,
+        rotation: RotationLike = (0, 0, 0),
+        width: float | None = None,
+    ):
+        locations = Locations._get_context()
+        if not locations:
+            raise ValueError("not in Locations context")
+        build_part = BuildPart._get_context()
+        if not build_part:
+            raise ValueError("not in BuildPart context")
 
-    Calculates and returns the width and height of a captive nut slot - which is effectively the width and height of a nut's clearance hole.
-    """
-    clearance = nut.clearance_hole_diameters[fit] - nut.thread_diameter
-    if isinstance(nut, HexNut):
-        rect_width = nut.nut_diameter + clearance
-        rect_height = nut.nut_diameter * math.sin(math.pi / 3) + clearance
-    return Vector(X=rect_width, Y=rect_height, Z=nut.nut_thickness)
+        clearance = nut.clearance_hole_diameters[fit] - nut.thread_diameter
+        if isinstance(nut, HexNut):
+            height = nut.nut_diameter * math.sin(math.pi / 3) + clearance
+            min_width = nut.nut_diameter + clearance
+        elif isinstance(nut, SquareNut):
+            height = nut.nut_diameter * math.sqrt(2) / 2 + clearance
+            min_width = height + clearance
+        else:
+            raise NotImplementedError(type(nut))
+        if width is None:
+            width = build_part.max_dimension
+
+        with BuildPart(mode=Mode.PRIVATE) as builder:
+            with BuildSketch():
+                location = Location((0, 0))
+                location *= Pos(X=-(width - min_width) / 2)
+                with Locations(location):
+                    Rectangle(width, height)
+            extrude(amount=nut.nut_thickness)
+        part = builder.part
+
+        super().__init__(
+            part,
+            mode=mode,
+            rotation=rotation,
+        )
 
 
 def row_major(x_dir: VectorLike | None = None, y_dir: VectorLike | None = None):
@@ -256,5 +303,10 @@ def centered_point_list(*points: tuple[float, float]) -> Iterable[tuple[float, f
 
 
 def main(model: Solid | Compound):
+    """
+    Used as the entrypoint for build123d scripts.
+
+    Often is invoked at the bottom of a user-created module
+    """
     ocp_vscode.set_defaults(reset_camera=ocp_vscode.Camera.KEEP)
     ocp_vscode.show(model)

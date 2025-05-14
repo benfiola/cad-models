@@ -23,13 +23,11 @@ from cad_models.models.rb4011 import RB4011
 
 
 class RB4011Tray(Model):
-    dimensions: Vector
-
     def __init__(self, **kwargs):
         router = RB4011()
         interface_thickness = 6.0 * MM
-        interface_hole_count = Vector(4, 2)
-        interface_hole_spacing = Vector(20 * MM, 20 * MM)
+        interface_hole_count = Vector(3, 2)
+        interface_hole_spacing = Vector(40 * MM, 20 * MM)
         interface_screw = RackInterfaceScrew()
         lip_thickness = 2 * MM
         tray_dimensions = Vector(0, 44.35 * MM, 0)
@@ -64,10 +62,11 @@ class RB4011Tray(Model):
                 split_faces = face.split(split_plane, keep=Keep.BOTH)
                 face = split_faces.faces().sort_by(Axis.Z)[0]
                 with BuildSketch(face, mode=Mode.PRIVATE):
-                    count = interface_hole_count
-                    spacing = Vector(interface_hole_spacing)
                     with GridLocations(
-                        spacing.X, spacing.Y, int(count.X), int(count.Y)
+                        interface_hole_spacing.X,
+                        interface_hole_spacing.Y,
+                        int(interface_hole_count.X),
+                        int(interface_hole_count.Y),
                     ) as grid_locations:
                         hole_locations = grid_locations.locations
                 hole_locations = sorted(

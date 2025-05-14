@@ -1,15 +1,12 @@
 from bd_warehouse.fastener import ClearanceHole
 from build123d import (
     MM,
-    Align,
     Axis,
-    Box,
     BuildLine,
     BuildPart,
     BuildSketch,
     Location,
     Locations,
-    Mode,
     Plane,
     Polyline,
     Pos,
@@ -21,11 +18,11 @@ from build123d import (
 )
 
 from cad_models.common import (
+    CaptiveNutSlot,
     Model,
     RackMountNut,
     RackMountScrew,
     WallScrew,
-    captive_nut_slot_dimensions,
     centered_point_list,
     main,
 )
@@ -37,7 +34,7 @@ class WallPatchPanelBracket(Model):
         arm_dimensions = Vector(0, 20 * MM, 90 * MM)
         base_dimensions = Vector(20 * MM, 0, 12 * MM)
         mount_hole_spacing = 70 * MM
-        mount_slot_offset = 5 * MM
+        mount_slot_offset = 8.25 * MM
         mount_nut = RackMountNut()
         mount_screw = RackMountScrew()
         wall_screw = WallScrew()
@@ -75,7 +72,6 @@ class WallPatchPanelBracket(Model):
                 ClearanceHole(wall_screw)
 
             # create mount holes + slots
-            slot_dimensions = captive_nut_slot_dimensions(mount_nut)
             faces = (
                 bracket.faces()
                 .filter_by(Axis.Y)
@@ -97,17 +93,9 @@ class WallPatchPanelBracket(Model):
 
                 # slot
                 location = face.location_at(0.5, 0.5)
-                location *= Pos(X=slot_dimensions.X / 2)
-                location *= Pos(X=-arm_dimensions.Y)
                 location *= Pos(Z=-mount_slot_offset)
                 with Locations(location):
-                    Box(
-                        arm_dimensions.Y,
-                        slot_dimensions.Y,
-                        slot_dimensions.Z,
-                        align=(Align.MIN, Align.CENTER, Align.CENTER),
-                        mode=Mode.SUBTRACT,
-                    )
+                    CaptiveNutSlot(mount_nut, width=arm_dimensions.Y)
 
         super().__init__(builder.part, **kwargs)
 
