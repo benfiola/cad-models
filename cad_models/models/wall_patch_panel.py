@@ -53,7 +53,7 @@ class WallPatchPanel(Model):
         ear_dimensions.Y = panel_dimensions.Y
 
         with BuildPart() as builder:
-            # create panel
+            # create panel (as top-down sketch)
             with BuildSketch(Plane.XY):
                 with BuildLine():
                     pd = panel_dimensions
@@ -110,9 +110,7 @@ class WallPatchPanel(Model):
                 with GridLocations(
                     spacing.X, spacing.Y, int(grid_count.X), int(grid_count.Y)
                 ) as grid_locations:
-                    Rectangle(
-                        base_keystone.dimensions.X, base_keystone.dimensions.Y
-                    )
+                    Rectangle(base_keystone.dimensions.X, base_keystone.dimensions.Y)
                     keystone_locations = grid_locations.locations
                     keystone_local_locations = grid_locations.local_locations
             extrude(amount=-panel_dimensions.Z, mode=Mode.SUBTRACT)

@@ -35,8 +35,14 @@ class MT6000MountTopBracket(Model):
         hole_dimensions = Vector(12.0 * MM, 6.0 * MM)
         hole_offset = 3 * MM
         hole_spacing = 31.75 * MM
+        # added .5 tolerance to X dimension
+        magnet_dimensions = Vector(6.5 * MM, 0, 3 * MM)
+        magnet_offset = 10 * MM
         modem = MT6000()
         modem_inset = 25 * MM
+
+        # derived data
+        magnet_dimensions.Y = magnet_dimensions.X
 
         with BuildPart() as builder:
             # create bracket (via top-down profile)
@@ -61,8 +67,7 @@ class MT6000MountTopBracket(Model):
             extrude(amount=ear_dimensions.Y)
 
             # find edges to fillet
-            ear_edges = builder.part.edges().filter_by(Axis.Y).sort_by(Axis.X)[:2]
-            fillet_edges = [*ear_edges]
+            fillet_edges = builder.part.edges().filter_by(Axis.Y).sort_by(Axis.X)[:2]
 
             # create modem mounts
             ear_face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
@@ -88,6 +93,15 @@ class MT6000MountTopBracket(Model):
                 location *= Pos(X=modem.peg_depth)
                 location *= Rot(Z=90)
                 RigidJoint(f"mt6000-{hole}", joint_location=location)
+
+            # create magnet hole
+            face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
+            with BuildSketch(face) as sketch:
+                location = Location((-face.length / 2, 0))
+                location *= Pos(X=magnet_offset)
+                with Locations(location):
+                    Circle(magnet_dimensions.X / 2)
+            extrude(amount=-magnet_dimensions.Z, mode=Mode.SUBTRACT)
 
             # create mount holes and joints
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
