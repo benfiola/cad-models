@@ -4,6 +4,7 @@ from build123d import (
     BuildLine,
     BuildPart,
     BuildSketch,
+    Circle,
     GridLocations,
     Location,
     Locations,
@@ -34,6 +35,9 @@ class Coda56MountTopBracket(Model):
         hole_offset = 3 * MM
         hole_spacing = 31.75 * MM
         hook_length = 50 * MM
+        # added .5 tolerance to X dimension
+        magnet_dimensions = Vector(6.5 * MM, 0, 3 * MM)
+        magnet_offset = 10 * MM
         router = Coda56()
         router_inset = 50 * MM
 
@@ -79,6 +83,15 @@ class Coda56MountTopBracket(Model):
                 .sort_by(Axis.Y)
             )
             fillet_edges = [*ear_edges, bracket_edges[0], bracket_edges[-1]]
+
+            # create magnet hole
+            face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
+            with BuildSketch(face) as sketch:
+                location = Location((-face.length / 2, 0))
+                location *= Pos(X=magnet_offset)
+                with Locations(location):
+                    Circle(magnet_dimensions.X / 2)
+            extrude(amount=-magnet_dimensions.Z, mode=Mode.SUBTRACT)
 
             # create mount holes and joints
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]

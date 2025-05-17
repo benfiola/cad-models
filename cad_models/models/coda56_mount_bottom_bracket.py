@@ -6,6 +6,7 @@ from build123d import (
     BuildLine,
     BuildPart,
     BuildSketch,
+    Circle,
     GridLocations,
     Location,
     Locations,
@@ -34,6 +35,9 @@ class Coda56MountBottomBracket(Model):
         bracket_thickness = 5.0 * MM
         corner_radius = 3.0 * MM
         ear_dimensions = Vector(28.0 * MM, 44.35 * MM, 0)
+        # added .5 tolerance to X dimension
+        magnet_dimensions = Vector(6.5 * MM, 0, 3 * MM)
+        magnet_offset = 10 * MM
         mount_hole_dimensions = Vector(12.0 * MM, 6.0 * MM)
         mount_hole_offset = 3 * MM
         mount_hole_spacing = 31.75 * MM
@@ -80,9 +84,7 @@ class Coda56MountBottomBracket(Model):
             # create stand ribs
             face = stand.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
             front_plane = Plane(face, x_dir=(1, 0, 0))
-            back_plane = front_plane.offset(
-                -(router.dimensions.Z + bracket_thickness)
-            )
+            back_plane = front_plane.offset(-(router.dimensions.Z + bracket_thickness))
             for plane in [front_plane, back_plane]:
                 with BuildSketch(plane):
                     location = (router.dimensions.X / 2, stand_thickness / 2)
@@ -118,6 +120,15 @@ class Coda56MountBottomBracket(Model):
                 location = Location(hole_location)
                 location *= Pos(Z=-router.standoff_dimensions.Z)
                 RigidJoint(f"coda-{hole}", joint_location=location)
+
+            # create magnet hole
+            face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
+            with BuildSketch(face) as sketch:
+                location = Location((-face.length / 2, 0))
+                location *= Pos(X=magnet_offset)
+                with Locations(location):
+                    Circle(magnet_dimensions.X / 2)
+            extrude(amount=-magnet_dimensions.Z, mode=Mode.SUBTRACT)
 
             # create mount holes and joints
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
