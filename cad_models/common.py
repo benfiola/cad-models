@@ -2,16 +2,26 @@ import math
 from typing import Any, Iterable, Literal
 
 import ocp_vscode
-from bd_warehouse.fastener import HexNut, Nut, PanHeadScrew, Screw, SquareNut
+from bd_warehouse.fastener import (
+    ClearanceHole,
+    HexNut,
+    Nut,
+    PanHeadScrew,
+    Screw,
+    SquareNut,
+)
 from build123d import (
     IN,
     MM,
+    Align,
+    Axis,
     BasePartObject,
     BuildLine,
     BuildPart,
     BuildSketch,
     Compound,
     Face,
+    GridLocations,
     Line,
     Location,
     Locations,
@@ -23,12 +33,17 @@ from build123d import (
     RadiusArc,
     Rectangle,
     RotationLike,
+    SlotOverall,
     Solid,
+    Triangle,
     Vector,
     VectorLike,
     extrude,
     make_face,
+    mirror,
 )
+
+U = 1.75 * IN
 
 
 class Model(Solid):
@@ -310,3 +325,123 @@ def main(model: Solid | Compound):
     """
     ocp_vscode.set_defaults(reset_camera=ocp_vscode.Camera.KEEP)
     ocp_vscode.show(model)
+
+
+class ServerRackBracket(BasePartObject):
+    def __init__(
+        self,
+        dimensions: VectorLike,
+        external: bool = False,
+        interface_holes: VectorLike | None = None,
+        ribs: bool = True,
+    ):
+        dimensions = Vector(dimensions)
+        ear_hole_dimensions = Vector(12 * MM, 6 * MM, 0)
+        ear_hole_spacing = dimensions.Y - 0.5 * IN
+        extra_space = 1.5 * MM
+        if interface_holes:
+            interface_holes = Vector(interface_holes)
+        else:
+            interface_holes = None
+        interface_nut = RackInterfaceNut()
+        interface_thickness = 6 * MM
+        thickness = 4 * MM
+
+        if external:
+            ear_dimensions = Vector(26.5 * MM, dimensions.Y, thickness)
+            ear_hole_offset = 3 * MM
+        else:
+            ear_dimensions = Vector(13.25 * MM, dimensions.Y, thickness)
+            ear_hole_offset = 6.125 * MM
+
+        with BuildPart(mode=Mode.PRIVATE) as builder:
+            # create profile (top-down)
+            with BuildSketch(Plane.XY):
+                with BuildLine():
+                    d = dimensions
+                    ed = ear_dimensions
+                    es = extra_space
+                    it = interface_thickness
+                    t = thickness
+                    points = list(
+                        centered_point_list(
+                            (0, 0),
+                            (0, t),
+                            (ed.X + es + +d.X, t),
+                            (ed.X + es + d.X, t + d.Z),
+                            (ed.X + es + d.X + it, t + d.Z),
+                            (ed.X + es + d.X + it, 0),
+                            (0, 0),
+                        )
+                    )
+                    for index in range(len(points) - 1, 0, -1):
+                        if index == len(points) - 1:
+                            continue
+                        if points[index] != points[index + 1]:
+                            continue
+                        points.pop(index + 1)
+                    Polyline(*points)
+                make_face()
+            extrude(amount=dimensions.Y)
+
+            # create mount holes
+            face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+            with BuildSketch(face) as sketch:
+                location = Location((face.length / 2, 0))
+                location *= Pos(X=-ear_hole_offset)
+                with Locations(location) as loc:
+                    with GridLocations(0, ear_hole_spacing, 1, 2) as grid_locs:
+                        SlotOverall(
+                            ear_hole_dimensions.X,
+                            ear_hole_dimensions.Y,
+                            align=(Align.MAX, Align.CENTER),
+                        )
+            extrude(amount=-thickness, mode=Mode.SUBTRACT)
+
+            # create interface holes
+            if interface_holes:
+                face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
+                with BuildSketch(face):
+                    width = face.length
+                    height = face.width - 2 * thickness
+                    x_spacing = width / int(interface_holes.X)
+                    y_spacing = height / int(interface_holes.Y)
+                    with GridLocations(
+                        x_spacing,
+                        y_spacing,
+                        int(interface_holes.X),
+                        int(interface_holes.Y),
+                    ) as grid_locs:
+                        hole_locations = grid_locs.locations
+                for index, hole_location in enumerate(hole_locations):
+                    with Locations(hole_location):
+                        ClearanceHole(
+                            interface_nut, depth=interface_thickness, captive_nut=True
+                        )
+
+            # create ribs
+            if dimensions.X != 0 and ribs:
+                face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0]
+                edge = face.edges().filter_by(Axis.X).sort_by(Axis.Y)[-2]
+                location = Location(edge.position_at(1.0))
+                location.orientation = face.center_location.orientation
+                with BuildSketch(location):
+                    depth = dimensions.Z - thickness
+                    width = dimensions.X
+                    Triangle(c=depth, a=width, B=90, align=(Align.MIN, Align.MIN))
+                rib = extrude(amount=-thickness)
+                mirror_plane = face.offset(-dimensions.Y / 2)
+                mirror(rib, Plane(mirror_plane))
+
+        super().__init__(builder.part)
+
+
+if __name__ == "__main__":
+    main(
+        ServerRackBracket(
+            dimensions=(0, 1 * U, 120 * MM),
+            external=True,
+            interface_holes=None,
+            ribs=False,
+        )
+    )
