@@ -19,8 +19,7 @@ class RB4011(Model):
 
     def __init__(self, **kwargs):
         # parameters
-        # added .5 MM tolerance to X and Z to ensure fitment
-        dimensions = Vector(228.5 * MM, 30 * MM, 120.5 * MM)
+        dimensions = Vector(228 * MM, 29.5 * MM, 120 * MM)
 
         with BuildPart() as builder:
             # create router box

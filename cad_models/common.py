@@ -271,6 +271,8 @@ class ServerRackBracket(BasePartObject):
     Creates a server rack mountable bracket.
     """
 
+    dimensions: Vector
+
     def __init__(
         self,
         dimensions: VectorLike,
@@ -399,8 +401,16 @@ class ServerRackBracket(BasePartObject):
 
         super().__init__(builder.part)
 
+        self.dimensions = Vector(
+            ear_dimensions.X + extra_space + dimensions.X + interface_thickness,
+            dimensions.Y,
+            thickness + dimensions.Z,
+        )
+
 
 class ServerRackBlank(BasePartObject):
+    dimensions: Vector
+
     def __init__(
         self, dimensions: VectorLike, interface_holes: VectorLike | None = None
     ):
@@ -483,6 +493,12 @@ class ServerRackBlank(BasePartObject):
                     RigidJoint(f"interface-1-{hole_index}", joint_location=location)
 
         super().__init__(builder.part)
+
+        self.dimensions = Vector(
+            interface_thickness + dimensions.X + interface_thickness,
+            dimensions.Y,
+            thickness + dimensions.Z,
+        )
 
 
 def row_major(x_dir: VectorLike | None = None, y_dir: VectorLike | None = None):
