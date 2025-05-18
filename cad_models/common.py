@@ -298,25 +298,23 @@ class ServerRackBracket(BasePartObject):
             ear_dimensions = Vector(16.25 * MM, dimensions.Y, thickness)
             ear_hole_offset = 3.62 * MM
 
-        required_width = ear_dimensions.X + extra_space + interface_thickness
-        if dimensions.X < required_width:
-            raise ValueError(f"width must be greater than or equal to {required_width}")
-
         with BuildPart(mode=Mode.PRIVATE) as builder:
             # create profile (top-down)
             with BuildSketch(Plane.XY):
                 with BuildLine():
                     d = dimensions
+                    ed = ear_dimensions
+                    es = extra_space
                     it = interface_thickness
                     t = thickness
                     points = list(
                         centered_point_list(
                             (0, 0),
                             (0, t),
-                            (d.X - it, t),
-                            (d.X - it, d.Z),
-                            (d.X, d.Z),
-                            (d.X, 0),
+                            (ed.X + es + d.X, t),
+                            (ed.X + es + d.X, t + d.Z),
+                            (ed.X + es + d.X + it, t + d.Z),
+                            (ed.X + es + d.X + it, 0),
                             (0, 0),
                         )
                     )
@@ -380,17 +378,18 @@ class ServerRackBracket(BasePartObject):
                     RigidJoint(f"interface-{hole_index}", joint_location=location)
 
             # create ribs
-            width = dimensions.X - (
-                ear_dimensions.X + extra_space + interface_thickness
-            )
-            if width != 0 and ribs:
+            if dimensions.X != 0 and ribs:
                 face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0]
                 edge = face.edges().filter_by(Axis.X).sort_by(Axis.Y)[-2]
                 location = Location(edge.position_at(1.0))
                 location.orientation = face.center_location.orientation
                 with BuildSketch(location):
-                    depth = dimensions.Z - thickness
-                    Triangle(c=depth, a=width, B=90, align=(Align.MIN, Align.MIN))
+                    Triangle(
+                        c=dimensions.Z,
+                        a=dimensions.X,
+                        B=90,
+                        align=(Align.MIN, Align.MIN),
+                    )
                 rib = extrude(amount=-thickness)
                 mirror_plane = face.offset(-dimensions.Y / 2)
                 mirror(rib, Plane(mirror_plane))
@@ -413,11 +412,6 @@ class ServerRackBlank(BasePartObject):
         interface_screw = ServerRackInterfaceScrew()
         interface_thickness = 6.0 * MM
         thickness = 4.0 * MM
-
-        required_width = interface_thickness * 2
-        if dimensions.X < required_width:
-            raise ValueError(f"width must be greater than {required_width}")
-        dimensions.X -= required_width
 
         with BuildPart(mode=Mode.PRIVATE) as builder:
             with BuildSketch():
@@ -585,7 +579,6 @@ if __name__ == "__main__":
     main(
         ServerRackBracket(
             dimensions=(100 * MM, 1 * U, 150 * MM),
-            external=False,
             interface_holes=(4, 2),
         )
     )
