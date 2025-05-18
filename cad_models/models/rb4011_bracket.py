@@ -11,7 +11,9 @@ class RB4011Bracket(Model):
             tray = RB4011Tray()
 
         dimensions = Vector(
-            ((19 * IN - tray.dimensions.X) / 2) - 6.0 * MM, 1 * U, tray.dimensions.Z
+            ((19 * IN - tray.dimensions.X) / 2) - (6.0 * MM),
+            1 * U,
+            tray.dimensions.Z - (4.0 * MM),
         )
         with BuildPart() as builder:
             bracket = ServerRackMountBracket(
