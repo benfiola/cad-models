@@ -381,6 +381,84 @@ class ServerRackMountBracket(BasePartObject):
         super().__init__(builder.part, **kwargs)
 
 
+class ServerRackMountBlank(BasePartObject):
+    def __init__(
+        self,
+        interface_holes: VectorLike,
+        interior_dimensions: VectorLike,
+        **kwargs,
+    ):
+        interior_dimensions = Vector(interior_dimensions)
+        if interface_holes is not None:
+            interface_holes = Vector(interface_holes)
+
+        with BuildPart(mode=Mode.PRIVATE):
+            interface_screw = ServerRackInterfaceScrew()
+        interface_thickness = 6 * MM
+        thickness = 4 * MM
+
+        dimensions = Vector(
+            interface_thickness + interior_dimensions.X + interface_thickness,
+            interior_dimensions.Y,
+            thickness + interior_dimensions.Z,
+        )
+
+        with BuildPart() as builder:
+            # create bracket profile (via top-down view)
+            with BuildSketch(Plane.XY):
+                with BuildLine():
+                    d = dimensions
+                    id = interior_dimensions
+                    it = interface_thickness
+                    t = thickness
+
+                    points = centered_point_list(
+                        (0, 0),
+                        (0, d.Z),
+                        (it, d.Z),
+                        (it, t),
+                        (it + id.X, t),
+                        (it + id.X, d.Z),
+                        (d.X, d.Z),
+                        (d.X, 0),
+                        (0, 0),
+                    )
+                    Polyline(*points)
+                make_face()
+            extrude(amount=dimensions.Y)
+
+            # create interface holes
+            face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
+            with BuildSketch(face, mode=Mode.PRIVATE):
+                width = face.length
+                height = face.width - 2 * thickness
+                x_spacing = width / int(interface_holes.X)
+                y_spacing = height / int(interface_holes.Y)
+                with GridLocations(
+                    x_spacing,
+                    y_spacing,
+                    int(interface_holes.X),
+                    int(interface_holes.Y),
+                ) as grid_locs:
+                    hole_locations = grid_locs.locations
+            hole_locations = sorted(
+                hole_locations, key=row_major(x_dir=(0, 1, 0), y_dir=(0, 0, -1))
+            )
+            mirror_plane = Plane(face.offset(interior_dimensions.X / 2))
+            for hole_index, hole_location in enumerate(hole_locations):
+                with Locations(hole_location):
+                    hole = ClearanceHole(interface_screw, depth=interface_thickness)
+                mirror(hole, mirror_plane)
+                location = Location(hole_location)
+                location *= Pos(Z=-interface_thickness)
+                location *= Rot(X=180, Z=180)
+                RigidJoint(f"interface-0-{hole_index}", joint_location=location)
+                location *= Pos(Z=-dimensions.X)
+                RigidJoint(f"interface-1-{hole_index}", joint_location=location)
+
+        super().__init__(builder.part, **kwargs)
+
+
 def row_major(x_dir: VectorLike | None = None, y_dir: VectorLike | None = None):
     """
     A function used as the 'key' kwarg to a sort function that sorts locations in row major order.
@@ -473,7 +551,7 @@ def main(model: Solid | Compound):
 
 if __name__ == "__main__":
     main(
-        ServerRackMountBracket(
+        ServerRackMountBlank(
             interface_holes=(3, 2), interior_dimensions=(100 * MM, 1 * U, 100 * MM)
         )
     )
