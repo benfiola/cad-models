@@ -25,8 +25,8 @@ from build123d import (
 
 from cad_models.common import (
     Model,
-    RackInterfaceNut,
-    RackInterfaceScrew,
+    ServerRackInterfaceNut,
+    ServerRackInterfaceScrew,
     centered_point_list,
     col_major,
     main,
@@ -53,7 +53,7 @@ class GenericMountBracket(Model):
         ear_hole_dimensions = Vector(12 * MM, 6 * MM)
         ear_hole_spacing = 31.75 * MM
         interface_thickness = 6 * MM
-        interface_nut = RackInterfaceNut()
+        interface_nut = ServerRackInterfaceNut()
         interface_hole_count = Vector(2, 2)
         interface_hole_spacing = Vector(60 * MM, 20 * MM)
 
@@ -145,7 +145,7 @@ class GenericMountBracket(Model):
         self.bracket_thickness = bracket_thickness
         self.interface_hole_count = interface_hole_count
         self.interface_hole_spacing = interface_hole_spacing
-        self.interface_screw = RackInterfaceScrew()
+        self.interface_screw = ServerRackInterfaceScrew()
         self.interface_thickness = interface_thickness
 
 

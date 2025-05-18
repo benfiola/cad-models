@@ -20,8 +20,8 @@ from build123d import (
 from cad_models.common import (
     CaptiveNutSlot,
     Model,
-    RackMountNut,
-    RackMountScrew,
+    ServerRackMountNut,
+    ServerRackMountScrew,
     WallScrew,
     centered_point_list,
     main,
@@ -35,8 +35,8 @@ class WallPatchPanelBracket(Model):
         base_dimensions = Vector(20 * MM, 0, 12 * MM)
         mount_hole_spacing = 70 * MM
         mount_slot_offset = 8.25 * MM
-        mount_nut = RackMountNut()
-        mount_screw = RackMountScrew()
+        mount_nut = ServerRackMountNut()
+        mount_screw = ServerRackMountScrew()
         wall_screw = WallScrew()
 
         # derived values

@@ -18,7 +18,7 @@ from build123d import (
     extrude,
 )
 
-from cad_models.common import Model, RackInterfaceScrew, main, row_major
+from cad_models.common import Model, ServerRackInterfaceScrew, main, row_major
 from cad_models.models.rb4011 import RB4011
 
 
@@ -28,7 +28,7 @@ class RB4011Tray(Model):
         interface_thickness = 6.0 * MM
         interface_hole_count = Vector(3, 2)
         interface_hole_spacing = Vector(40 * MM, 20 * MM)
-        interface_screw = RackInterfaceScrew()
+        interface_screw = ServerRackInterfaceScrew()
         lip_thickness = 2 * MM
         tray_dimensions = Vector(0, 44.35 * MM, 0)
         tray_thickness = 4.0 * MM

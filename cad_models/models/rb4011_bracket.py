@@ -28,7 +28,7 @@ from build123d import (
 
 from cad_models.common import (
     Model,
-    RackInterfaceNut,
+    ServerRackInterfaceNut,
     centered_point_list,
     col_major,
     main,
@@ -48,7 +48,7 @@ class RB4011Bracket(Model):
         ear_hole_dimensions = Vector(12 * MM, 6 * MM)
         ear_hole_spacing = 31.75 * MM
         interface_thickness = 6 * MM
-        interface_nut = RackInterfaceNut()
+        interface_nut = ServerRackInterfaceNut()
         interface_hole_count = Vector(4, 2)
         interface_hole_spacing = Vector(20 * MM, 20 * MM)
         tray = RB4011Tray()

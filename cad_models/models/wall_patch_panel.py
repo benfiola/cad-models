@@ -16,7 +16,6 @@ from build123d import (
     Rectangle,
     RigidJoint,
     Rot,
-    SlotOverall,
     Text,
     Vector,
     add,
@@ -25,7 +24,14 @@ from build123d import (
     make_face,
 )
 
-from cad_models.common import Model, centered_point_list, col_major, main, row_major
+from cad_models.common import (
+    Model,
+    ServerRackMountHole,
+    centered_point_list,
+    col_major,
+    main,
+    row_major,
+)
 from cad_models.data import data_file
 from cad_models.models.keystone_receiver import KeystoneReceiver
 
@@ -45,7 +51,6 @@ class WallPatchPanel(Model):
             ["br2-2", None, "lr-1"],
             ["lr-2", "o-1", "o-2"],
         ]
-        hole_dimensions = Vector(12 * MM, 6 * MM)
         hole_spacing = Vector(230 * MM, 70 * MM)
         panel_dimensions = Vector(250 * MM, 90 * MM, 11.25 * MM)
 
@@ -78,16 +83,16 @@ class WallPatchPanel(Model):
 
             # create mount holes and joints
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
-            with BuildSketch(face):
+            with BuildSketch(face, mode=Mode.PRIVATE):
                 with GridLocations(
                     hole_spacing.X, hole_spacing.Y, 2, 2
                 ) as grid_locations:
-                    SlotOverall(hole_dimensions.X, hole_dimensions.Y)
                     mount_hole_locations = grid_locations.locations
-            extrude(amount=-ear_dimensions.Z, mode=Mode.SUBTRACT)
             locations = sorted(mount_hole_locations, key=col_major())
             pairs = zip(locations[::2], locations[1::2])
             for index, (top, bottom) in enumerate(pairs):
+                with Locations(top, bottom):
+                    ServerRackMountHole(depth=ear_dimensions.Z)
                 top = Location(top)
                 top *= Pos(Z=-ear_dimensions.Z)
                 top *= Rot(Z=180)

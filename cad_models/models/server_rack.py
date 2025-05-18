@@ -17,7 +17,7 @@ from build123d import (
     mirror,
 )
 
-from cad_models.common import Model, RackMountScrew, main
+from cad_models.common import Model, ServerRackMountScrew, main
 
 
 class Mount(Enum):
@@ -32,7 +32,7 @@ class ServerRack(Model):
         arm_distance = 19 * IN
         arm_dimensions = Vector(26.5 * MM, 0, 18.11 * IN)
         hole_offset = 5 * MM
-        mount_screw = RackMountScrew()
+        mount_screw = ServerRackMountScrew()
 
         # derived values
         arm_dimensions.Y = u * 1.75 * IN
