@@ -5,84 +5,86 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Circle,
-    GridLocations,
     Location,
     Locations,
     Mode,
     Plane,
     Polyline,
     Pos,
-    RigidJoint,
-    Rot,
-    SlotOverall,
     Vector,
     extrude,
     fillet,
     make_face,
+    mirror,
 )
 
-from cad_models.common import Model, centered_point_list, col_major, main
+from cad_models.common import Model, ServerRackMountBracket, U, main
 from cad_models.models.coda56 import Coda56
 
 
 class Coda56MountTopBracket(Model):
     def __init__(self, **kwargs):
+        bracket_height = 1 * U
         bracket_thickness = 5.0 * MM
         corner_radius = 3.0 * MM
-        ear_dimensions = Vector(26.5 * MM, 44.35 * MM, 0)
-        ear_extra_space = 1.5 * MM
-        hole_dimensions = Vector(12.0 * MM, 6.0 * MM)
-        hole_offset = 3 * MM
-        hole_spacing = 31.75 * MM
-        hook_length = 50 * MM
         magnet_dimensions = Vector(6.0 * MM + 0.5 * MM, 0, 3.0 * MM)
         magnet_offset = 10 * MM
         router = Coda56()
         router_inset = 50 * MM
+        support_hook_length = 50 * MM
 
+        router_dimensions = Vector(
+            router.dimensions.X + 0.5 * MM,
+            router.dimensions.Y,
+            router.dimensions.Z + 0.5 * MM,
+        )
+        support_dimensions = Vector(
+            router_dimensions.X + bracket_thickness,
+            bracket_height,
+            bracket_thickness + router_dimensions.Z + bracket_thickness,
+        )
+        interior_dimensions = Vector(
+            0, bracket_height, router_inset + support_dimensions.Z
+        )
         with BuildPart() as builder:
-            # create bracket (via top-down profile)
-            with BuildSketch(Plane.XY):
+            bracket = ServerRackMountBracket(
+                external=True, interior_dimensions=interior_dimensions
+            )
+            builder.joints.update(bracket.joints)
+
+            # create supports
+            face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
+            edge = face.edges().filter_by(Axis.X).sort_by(Axis.Y)[-1]
+            location = edge.location_at(1.0)
+            location.orientation = face.center_location.orientation
+            with BuildSketch(location):
                 with BuildLine():
                     bt = bracket_thickness
-                    ed = ear_dimensions
-                    ees = ear_extra_space
-                    hl = hook_length
-                    rd = router.dimensions
-                    ri = router_inset
-
-                    points = centered_point_list(
+                    sd = support_dimensions
+                    shl = support_hook_length
+                    Polyline(
                         (0, 0),
-                        (ed.X + ees + bt, 0),
-                        (ed.X + ees + bt, ri),
-                        (ed.X + ees + bt + rd.X + bt, ri),
-                        (ed.X + ees + bt + rd.X + bt, ri + bt + hl),
-                        (ed.X + ees + bt + rd.X, ri + bt + hl),
-                        (ed.X + ees + bt + rd.X, ri + bt),
-                        (ed.X + ees + bt, ri + bt),
-                        (ed.X + ees + bt, ri + bt + rd.Z),
-                        (ed.X + ees + bt + rd.X, ri + bt + rd.Z),
-                        (ed.X + ees + bt + rd.X, ri + bt + rd.Z - hl),
-                        (ed.X + ees + bt + rd.X + bt, ri + bt + rd.Z - hl),
-                        (ed.X + ees + bt + rd.X + bt, ri + bt + rd.Z + bt),
-                        (ed.X + ees, ri + bt + rd.Z + bt),
-                        (ed.X + ees, bt),
-                        (0, bt),
+                        (sd.X, 0),
+                        (sd.X, -shl),
+                        (sd.X - bt, -shl),
+                        (sd.X - bt, -bt),
+                        (0, -bt),
                         (0, 0),
                     )
-                    Polyline(*points)
                 make_face()
-            extrude(amount=ear_dimensions.Y)
+            support_arm = extrude(amount=-support_dimensions.Y)
+            mirror_plane = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[-1]
+            mirror_plane = mirror_plane.offset(-support_dimensions.Z / 2)
+            mirror(support_arm, Plane(mirror_plane))
 
             # find edges to fillet
-            ear_edges = builder.part.edges().filter_by(Axis.Y).sort_by(Axis.X)[:2]
             bracket_edges = (
                 builder.part.edges()
                 .filter_by(Axis.Z)
-                .sort_by(Axis.X)[-4:]
+                .group_by(Axis.X)[-1]
                 .sort_by(Axis.Y)
             )
-            fillet_edges = [*ear_edges, bracket_edges[0], bracket_edges[-1]]
+            fillet_edges = [bracket_edges[0], bracket_edges[-1]]
 
             # create magnet hole
             face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
@@ -92,25 +94,6 @@ class Coda56MountTopBracket(Model):
                 with Locations(location):
                     Circle(magnet_dimensions.X / 2)
             extrude(amount=-magnet_dimensions.Z, mode=Mode.SUBTRACT)
-
-            # create mount holes and joints
-            face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
-            with BuildSketch(face):
-                location = Location((0, 0))
-                location *= Pos(X=-face.length / 2)
-                location *= Pos(X=hole_offset)
-                location *= Pos(X=hole_dimensions.X / 2)
-                with Locations(location):
-                    with GridLocations(0.0, hole_spacing, 1, 2) as grid_locations:
-                        SlotOverall(hole_dimensions.X, hole_dimensions.Y)
-                        hole_locations = grid_locations.locations
-            extrude(amount=-bracket_thickness, mode=Mode.SUBTRACT)
-            locations = sorted(hole_locations, key=col_major(y_dir=(0, 0, -1)))
-            for index, location in enumerate(locations):
-                joint_location = Location(location)
-                joint_location *= Pos(Z=-bracket_thickness)
-                joint_location *= Rot(Z=180)
-                RigidJoint(f"server-rack-{index}", joint_location=joint_location)
 
             # apply fillet
             fillet(fillet_edges, corner_radius)

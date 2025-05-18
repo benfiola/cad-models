@@ -17,7 +17,7 @@ class RB4011Mount(Compound):
             bracket_joint: RigidJoint = left_bracket.joints[f"server-rack-{hole}"]
             rack_joint.connect_to(bracket_joint)
 
-        right_bracket = RB4011Bracket(flip_joints=True)
+        right_bracket = RB4011Bracket(flipped_joints=True)
         for hole in range(0, 2):
             rack_joint: RigidJoint = server_rack.joints[f"mount-1-1-{hole}"]
             bracket_joint: RigidJoint = right_bracket.joints[f"server-rack-{1-hole}"]

@@ -2,16 +2,26 @@ import math
 from typing import Any, Iterable, Literal
 
 import ocp_vscode
-from bd_warehouse.fastener import HexNut, Nut, PanHeadScrew, Screw, SquareNut
+from bd_warehouse.fastener import (
+    ClearanceHole,
+    HexNut,
+    Nut,
+    PanHeadScrew,
+    Screw,
+    SquareNut,
+)
 from build123d import (
     IN,
     MM,
+    Align,
+    Axis,
     BasePartObject,
     BuildLine,
     BuildPart,
     BuildSketch,
     Compound,
     Face,
+    GridLocations,
     Line,
     Location,
     Locations,
@@ -22,12 +32,18 @@ from build123d import (
     Pos,
     RadiusArc,
     Rectangle,
+    RigidJoint,
+    Rot,
     RotationLike,
+    SlotOverall,
     Solid,
+    Triangle,
     Vector,
     VectorLike,
     extrude,
+    fillet,
     make_face,
+    mirror,
 )
 
 U = 1.75 * IN
@@ -228,6 +244,143 @@ class CaptiveNutSlot(BasePartObject):
         )
 
 
+class ServerRackMountBracket(BasePartObject):
+    def __init__(
+        self,
+        interior_dimensions: VectorLike,
+        ribs: bool = True,
+        interface_holes: VectorLike | None = None,
+        external: bool = False,
+        flipped_joints: bool = False,
+        **kwargs,
+    ):
+        interior_dimensions = Vector(interior_dimensions)
+        if interface_holes is not None:
+            interface_holes = Vector(interface_holes)
+
+        corner_radius = 3 * MM
+        ear_dimensions = Vector(16.25 * MM, 0, 0)
+        if external:
+            ear_dimensions.X = 26.5 * MM
+        ear_extra_space = 1.5 * MM
+        ear_hole_dimensions = Vector(12 * MM, 6 * MM)
+        ear_hole_offset = 3.125 * MM
+        if external:
+            ear_hole_offset = 3 * MM
+        ear_hole_spacing = interior_dimensions.Y - (0.5 * IN)
+        with BuildPart(mode=Mode.PRIVATE):
+            interface_nut = ServerRackInterfaceNut()
+        interface_thickness = 6 * MM
+        thickness = 4 * MM
+
+        dimensions = Vector(
+            ear_dimensions.X + interior_dimensions.X + interface_thickness,
+            interior_dimensions.Y,
+            thickness + interior_dimensions.Z,
+        )
+
+        with BuildPart() as builder:
+            # create bracket profile (via top-down view)
+            with BuildSketch(Plane.XY):
+                with BuildLine():
+                    d = dimensions
+                    ed = ear_dimensions
+                    ees = ear_extra_space
+                    id = interior_dimensions
+                    it = interface_thickness
+                    t = thickness
+
+                    points = centered_point_list(
+                        (0, 0),
+                        (0, t),
+                        (ed.X + id.X, t),
+                        (ed.X + id.X, d.Z),
+                        (ed.X + id.X + it, d.Z),
+                        (ed.X + id.X + it, 0),
+                        (0, 0),
+                    )
+                    Polyline(*points)
+                make_face()
+            extrude(amount=dimensions.Y)
+
+            # gather edges to fillet
+            fillet_edges = builder.part.edges().filter_by(Axis.Y).sort_by(Axis.X)[:2]
+
+            # create mount holes
+            face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+            with BuildSketch(face) as sketch:
+                location = Location((face.length / 2, 0))
+                location *= Pos(X=-ear_hole_offset)
+                location *= Pos(X=-ear_hole_dimensions.X / 2)
+                with Locations(location) as loc:
+                    with GridLocations(0, ear_hole_spacing, 1, 2) as grid_locs:
+                        SlotOverall(ear_hole_dimensions.X, ear_hole_dimensions.Y)
+                        mount_hole_locations = grid_locs.locations
+            extrude(amount=-thickness, mode=Mode.SUBTRACT)
+            mount_hole_locations = sorted(mount_hole_locations, key=col_major())
+            for mount_hole_index, mount_hole_location in enumerate(
+                mount_hole_locations
+            ):
+                location = Location(mount_hole_location)
+                location *= Pos(Z=-thickness)
+                if not external:
+                    location *= Rot(Z=180)
+                RigidJoint(f"server-rack-{mount_hole_index}", joint_location=location)
+
+            # create interface holes
+            if interface_holes:
+                face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
+                with BuildSketch(face, mode=Mode.PRIVATE):
+                    width = face.length
+                    height = face.width - 2 * thickness
+                    x_spacing = width / int(interface_holes.X)
+                    y_spacing = height / int(interface_holes.Y)
+                    with GridLocations(
+                        x_spacing,
+                        y_spacing,
+                        int(interface_holes.X),
+                        int(interface_holes.Y),
+                    ) as grid_locs:
+                        hole_locations = grid_locs.locations
+                hole_locations = sorted(
+                    hole_locations, key=row_major(x_dir=(0, 1, 0), y_dir=(0, 0, -1))
+                )
+                for hole_index, hole_location in enumerate(hole_locations):
+                    with Locations(hole_location):
+                        ClearanceHole(
+                            interface_nut, depth=interface_thickness, captive_nut=True
+                        )
+                    location = Location(hole_location)
+                    location *= Pos(Z=-interface_thickness)
+                    location *= Rot(X=180, Z=180)
+                    if flipped_joints:
+                        location *= Rot(X=180)
+                    RigidJoint(f"interface-{hole_index}", joint_location=location)
+
+            # create ribs
+            rib_width = interior_dimensions.X - ear_extra_space
+            if rib_width > 0 and ribs:
+                face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0]
+                edge = face.edges().filter_by(Axis.X).sort_by(Axis.Y)[-2]
+                location = Location(edge.position_at(1.0))
+                location.orientation = face.center_location.orientation
+                with BuildSketch(location):
+                    Triangle(
+                        c=interior_dimensions.Z,
+                        a=rib_width,
+                        B=90,
+                        align=(Align.MIN, Align.MIN),
+                    )
+                rib = extrude(amount=-thickness)
+                mirror_plane = face.offset(-interior_dimensions.Y / 2)
+                mirror(rib, Plane(mirror_plane))
+
+            # fillet edges
+            fillet(fillet_edges, corner_radius)
+
+        super().__init__(builder.part, **kwargs)
+
+
 def row_major(x_dir: VectorLike | None = None, y_dir: VectorLike | None = None):
     """
     A function used as the 'key' kwarg to a sort function that sorts locations in row major order.
@@ -316,3 +469,11 @@ def main(model: Solid | Compound):
     """
     ocp_vscode.set_defaults(reset_camera=ocp_vscode.Camera.KEEP)
     ocp_vscode.show(model)
+
+
+if __name__ == "__main__":
+    main(
+        ServerRackMountBracket(
+            interface_holes=(3, 2), interior_dimensions=(100 * MM, 1 * U, 100 * MM)
+        )
+    )
