@@ -27,16 +27,15 @@ from cad_models.models.coda56 import Coda56
 
 class Coda56MountTopBracket(Model):
     def __init__(self, **kwargs):
-        # parameters
         bracket_thickness = 5.0 * MM
         corner_radius = 3.0 * MM
-        ear_dimensions = Vector(28.0 * MM, 44.35 * MM, 0)
+        ear_dimensions = Vector(26.5 * MM, 44.35 * MM, 0)
+        ear_extra_space = 1.5 * MM
         hole_dimensions = Vector(12.0 * MM, 6.0 * MM)
         hole_offset = 3 * MM
         hole_spacing = 31.75 * MM
         hook_length = 50 * MM
-        # added .5 tolerance to X dimension
-        magnet_dimensions = Vector(6.5 * MM, 0, 3 * MM)
+        magnet_dimensions = Vector(6.0 * MM + 0.5 * MM, 0, 3.0 * MM)
         magnet_offset = 10 * MM
         router = Coda56()
         router_inset = 50 * MM
@@ -47,26 +46,27 @@ class Coda56MountTopBracket(Model):
                 with BuildLine():
                     bt = bracket_thickness
                     ed = ear_dimensions
+                    ees = ear_extra_space
                     hl = hook_length
                     rd = router.dimensions
                     ri = router_inset
 
                     points = centered_point_list(
                         (0, 0),
-                        (ed.X + bt, 0),
-                        (ed.X + bt, ri),
-                        (ed.X + bt + rd.X + bt, ri),
-                        (ed.X + bt + rd.X + bt, ri + bt + hl),
-                        (ed.X + bt + rd.X, ri + bt + hl),
-                        (ed.X + bt + rd.X, ri + bt),
-                        (ed.X + bt, ri + bt),
-                        (ed.X + bt, ri + bt + rd.Z),
-                        (ed.X + bt + rd.X, ri + bt + rd.Z),
-                        (ed.X + bt + rd.X, ri + bt + rd.Z - hl),
-                        (ed.X + bt + rd.X + bt, ri + bt + rd.Z - hl),
-                        (ed.X + bt + rd.X + bt, ri + bt + rd.Z + bt),
-                        (ed.X, ri + bt + rd.Z + bt),
-                        (ed.X, bt),
+                        (ed.X + ees + bt, 0),
+                        (ed.X + ees + bt, ri),
+                        (ed.X + ees + bt + rd.X + bt, ri),
+                        (ed.X + ees + bt + rd.X + bt, ri + bt + hl),
+                        (ed.X + ees + bt + rd.X, ri + bt + hl),
+                        (ed.X + ees + bt + rd.X, ri + bt),
+                        (ed.X + ees + bt, ri + bt),
+                        (ed.X + ees + bt, ri + bt + rd.Z),
+                        (ed.X + ees + bt + rd.X, ri + bt + rd.Z),
+                        (ed.X + ees + bt + rd.X, ri + bt + rd.Z - hl),
+                        (ed.X + ees + bt + rd.X + bt, ri + bt + rd.Z - hl),
+                        (ed.X + ees + bt + rd.X + bt, ri + bt + rd.Z + bt),
+                        (ed.X + ees, ri + bt + rd.Z + bt),
+                        (ed.X + ees, bt),
                         (0, bt),
                         (0, 0),
                     )
@@ -86,7 +86,7 @@ class Coda56MountTopBracket(Model):
 
             # create magnet hole
             face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
-            with BuildSketch(face) as sketch:
+            with BuildSketch(face):
                 location = Location((-face.length / 2, 0))
                 location *= Pos(X=magnet_offset)
                 with Locations(location):

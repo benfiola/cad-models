@@ -17,27 +17,27 @@ class RB4011Mount(Compound):
             bracket_joint: RigidJoint = left_bracket.joints[f"server-rack-{hole}"]
             rack_joint.connect_to(bracket_joint)
 
-        right_bracket = RB4011Bracket()
+        right_bracket = RB4011Bracket(flip_joints=True)
         for hole in range(0, 2):
             rack_joint: RigidJoint = server_rack.joints[f"mount-1-1-{hole}"]
             bracket_joint: RigidJoint = right_bracket.joints[f"server-rack-{1-hole}"]
             rack_joint.connect_to(bracket_joint)
 
         tray = RB4011Tray()
-        for hole in range(0, 8):
+        for hole in range(0, 6):
             tray_joint: RigidJoint = tray.joints[f"interface-0-{hole}"]
             bracket_joint: RigidJoint = left_bracket.joints[f"interface-{hole}"]
             bracket_joint.connect_to(tray_joint)
-        for hole in range(0, 8):
+        for hole in range(0, 6):
             tray_joint: RigidJoint = tray.joints[f"interface-1-{hole}"]
-            hole += 4
-            hole %= 8
+            hole += 3
+            hole %= 6
             bracket_joint: RigidJoint = right_bracket.joints[f"interface-{hole}"]
             bracket_joint.connect_to(tray_joint)
 
         router = RB4011(color=Color("white", alpha=0.7))
         router_joint: RigidJoint = router.joints["mount"]
-        tray_joint: RigidJoint = tray.joints["router"]
+        tray_joint: RigidJoint = tray.joints["rb4011"]
         tray_joint.connect_to(router_joint)
 
         super().__init__(

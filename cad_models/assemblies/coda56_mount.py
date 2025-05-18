@@ -26,7 +26,7 @@ class Coda56Mount(Compound):
 
         coda = Coda56(color=Color("white", alpha=0.7))
         for hole in range(0, 2):
-            bracket_joint: RigidJoint = bottom_bracket.joints[f"coda-{hole}"]
+            bracket_joint: RigidJoint = bottom_bracket.joints[f"coda56-{hole}"]
             coda_joint: RigidJoint = coda.joints[f"mount-{hole}"]
             bracket_joint.connect_to(coda_joint)
 

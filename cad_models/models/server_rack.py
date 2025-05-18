@@ -4,6 +4,7 @@ from bd_warehouse.fastener import ClearanceHole
 from build123d import (
     IN,
     MM,
+    Align,
     Axis,
     Box,
     BuildPart,
@@ -46,6 +47,7 @@ class ServerRack(Model):
                     arm_dimensions.X,
                     arm_dimensions.Z,
                     arm_dimensions.Y,
+                    align=(Align.MAX, Align.CENTER, Align.CENTER),
                 )
 
             # create mount holes

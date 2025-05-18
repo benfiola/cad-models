@@ -19,11 +19,10 @@ class HueBridge(Model):
 
     def __init__(self, **kwargs):
         # parameters
-        # added .5 MM tolerance to X and Z to ensure fitment
-        dimensions = Vector(91.4 * MM, 26 * MM, 90.6 * MM)
+        dimensions = Vector(90.9 * MM, 26 * MM, 90.1 * MM)
 
         with BuildPart() as builder:
-            # create router box
+            # create bridge box
             with BuildSketch(Plane.XZ):
                 Rectangle(dimensions.X, dimensions.Y)
             extrude(amount=dimensions.Z)

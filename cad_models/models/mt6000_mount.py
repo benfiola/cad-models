@@ -31,12 +31,12 @@ class MT6000MountTopBracket(Model):
         # parameters
         bracket_thickness = 5.0 * MM
         corner_radius = 3.0 * MM
-        ear_dimensions = Vector(28.0 * MM, 44.35 * MM, 0)
+        ear_dimensions = Vector(26.5 * MM, 44.35 * MM, 0)
+        ear_extra_space = 1.5 * MM
         hole_dimensions = Vector(12.0 * MM, 6.0 * MM)
         hole_offset = 3 * MM
         hole_spacing = 31.75 * MM
-        # added .5 tolerance to X dimension
-        magnet_dimensions = Vector(6.5 * MM, 0, 3 * MM)
+        magnet_dimensions = Vector(6.0 * MM + 0.5, 0, 3 * MM)
         magnet_offset = 10 * MM
         modem = MT6000()
         modem_inset = 25 * MM
@@ -50,15 +50,16 @@ class MT6000MountTopBracket(Model):
                 with BuildLine():
                     bt = bracket_thickness
                     ed = ear_dimensions
+                    ees = ear_extra_space
                     md = modem.dimensions
                     mi = modem_inset
 
                     points = centered_point_list(
                         (0, 0),
-                        (ed.X + bt, 0),
-                        (ed.X + bt, bt + mi + md.X),
-                        (ed.X, bt + mi + md.X),
-                        (ed.X, bt),
+                        (ed.X + ees + bt, 0),
+                        (ed.X + ees + bt, bt + mi + md.X),
+                        (ed.X + ees, bt + mi + md.X),
+                        (ed.X + ees, bt),
                         (0, bt),
                         (0, 0),
                     )
