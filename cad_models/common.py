@@ -271,7 +271,7 @@ class ServerRackBracket(BasePartObject):
     Creates a server rack mountable bracket.
     """
 
-    dimensions: Vector
+    rack_dimensions: Vector
 
     def __init__(
         self,
@@ -281,7 +281,7 @@ class ServerRackBracket(BasePartObject):
         ribs: bool = True,
     ):
         dimensions = Vector(dimensions)
-        ear_hole_ref = ServerRackMountHole(depth=1.0 * MM)
+        ear_hole_ref = ServerRackMountHole(depth=1.0 * MM, mode=Mode.PRIVATE)
         ear_hole_spacing = dimensions.Y - 0.5 * IN
         extra_space = 1.5 * MM
         fillet_radius = 3 * MM
@@ -289,7 +289,8 @@ class ServerRackBracket(BasePartObject):
             interface_holes = Vector(interface_holes)
         else:
             interface_holes = None
-        interface_nut = ServerRackInterfaceNut()
+        with BuildPart(mode=Mode.PRIVATE):
+            interface_nut = ServerRackInterfaceNut(mode=Mode.PRIVATE)
         interface_thickness = 6 * MM
         thickness = 4 * MM
 
@@ -401,15 +402,15 @@ class ServerRackBracket(BasePartObject):
 
         super().__init__(builder.part)
 
-        self.dimensions = Vector(
-            ear_dimensions.X + extra_space + dimensions.X + interface_thickness,
+        self.rack_dimensions = Vector(
+            extra_space + dimensions.X + interface_thickness,
             dimensions.Y,
             thickness + dimensions.Z,
         )
 
 
 class ServerRackBlank(BasePartObject):
-    dimensions: Vector
+    rack_dimensions: Vector
 
     def __init__(
         self, dimensions: VectorLike, interface_holes: VectorLike | None = None
@@ -419,7 +420,8 @@ class ServerRackBlank(BasePartObject):
             interface_holes = Vector(interface_holes)
         else:
             interface_holes = None
-        interface_screw = ServerRackInterfaceScrew()
+        with BuildPart(mode=Mode.PRIVATE):
+            interface_screw = ServerRackInterfaceScrew()
         interface_thickness = 6.0 * MM
         thickness = 4.0 * MM
 
@@ -494,7 +496,7 @@ class ServerRackBlank(BasePartObject):
 
         super().__init__(builder.part)
 
-        self.dimensions = Vector(
+        self.rack_dimensions = Vector(
             interface_thickness + dimensions.X + interface_thickness,
             dimensions.Y,
             thickness + dimensions.Z,
