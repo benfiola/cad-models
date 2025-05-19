@@ -19,7 +19,13 @@ class RB4011(Model):
 
     def __init__(self, **kwargs):
         # parameters
-        dimensions = Vector(228 * MM, 29.5 * MM, 120 * MM)
+        dimensions = Vector(228 * MM, 26.2 * MM, 117.8 * MM)
+        # min space between feet
+        feet_spacing = Vector(14.82 * MM, 6.22 * MM)
+        feet_diameter = 14 * MM
+        feet_height = 3.5 * MM
+        # offset from face
+        feet_offset = 9 * MM
 
         with BuildPart() as builder:
             # create router box

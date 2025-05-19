@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from build123d import export_stl
+from build123d import export_step, export_stl
 from click import argument, echo, group, option
 
 from cad_models.models import import_model, list_model_names
@@ -14,13 +14,13 @@ def grp_main():
 @grp_main.command("export-model")
 @argument("model-name")
 @option("--format")
-@option("--output-file")
-def cmd_export_model(model_name: str, format: str | None, output_file: str | None):
+@option("--output-file", type=Path)
+def cmd_export_model(model_name: str, format: str | None, output_file: Path | None):
     if format is None:
-        format = "stl"
+        format = "step"
     if output_file is None:
         output_file = Path.cwd().joinpath("dist", f"{model_name}.{format}")
-    output_file: Path = Path(output_file)
+    output_file = Path(output_file)
 
     model = import_model(model_name)
 
@@ -31,6 +31,8 @@ def cmd_export_model(model_name: str, format: str | None, output_file: str | Non
 
     if format == "stl":
         export_stl(model, output_file)
+    elif format == "step":
+        export_step(model, output_file)
     else:
         raise ValueError(f"unknown format: {format}")
 
