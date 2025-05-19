@@ -454,7 +454,7 @@ class ServerRackMountBlank(BasePartObject):
             for hole_index, hole_location in enumerate(hole_locations):
                 with Locations(hole_location):
                     hole = ClearanceHole(interface_screw, depth=interface_thickness)
-                mirror(hole, mirror_plane)
+                mirror(hole, mirror_plane, mode=Mode.SUBTRACT)
                 location = Location(hole_location)
                 location *= Pos(Z=-interface_thickness)
                 RigidJoint(f"interface-0-{hole_index}", joint_location=location)
@@ -554,11 +554,3 @@ def main(model: Solid | Compound):
     """
     ocp_vscode.set_defaults(reset_camera=ocp_vscode.Camera.KEEP)
     ocp_vscode.show(model)
-
-
-if __name__ == "__main__":
-    main(
-        ServerRackMountBlank(
-            interface_holes=(3, 2), interior_dimensions=(100 * MM, 1 * U, 100 * MM)
-        )
-    )

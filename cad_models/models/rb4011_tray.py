@@ -4,6 +4,8 @@ from build123d import (
     Axis,
     BuildPart,
     BuildSketch,
+    Circle,
+    GridLocations,
     Location,
     Locations,
     Mode,
@@ -36,6 +38,7 @@ class RB4011Tray(Model):
             router.dimensions.Y + router_tolerance,
             router.dimensions.Z + router_tolerance,
         )
+        router_feet_diameter = router.feet_diameter + router_tolerance
         interior_dimensions = Vector(
             router_dimensions.X,
             1 * U,
@@ -72,6 +75,15 @@ class RB4011Tray(Model):
             location = face.location_at(0.5, 0.5)
             location *= Rot(Y=180)
             RigidJoint(f"rb4011", joint_location=location)
+
+            # create feet cutouts
+            face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
+            location = face.location_at(0.5, 0.0)
+            location *= Pos(Y=router.feet_offset)
+            with BuildSketch(location):
+                with GridLocations(router.feet_spacing.X, router.feet_spacing.Y, 2, 2):
+                    Circle(router_feet_diameter / 2)
+            extrude(amount=-router.feet_height, mode=Mode.SUBTRACT)
 
             # create face cutout
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
