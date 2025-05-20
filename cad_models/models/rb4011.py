@@ -29,7 +29,7 @@ class RB4011(Model):
         dimensions = Vector(228 * MM, 26.2 * MM, 117.8 * MM)
         feet_diameter = 14 * MM
         feet_height = 3.5 * MM
-        feet_spacing = Vector(162.2 * MM, 76.2 * MM)
+        feet_spacing = Vector(162.2 * MM, 65.34 * MM)
         feet_offset = 9 * MM + (feet_diameter + feet_spacing.Y) / 2
 
         with BuildPart() as builder:

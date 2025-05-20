@@ -6,11 +6,13 @@ from build123d import (
     BuildSketch,
     Circle,
     GridLocations,
+    HexLocations,
     Location,
     Locations,
     Mode,
     Pos,
     Rectangle,
+    RegularPolygon,
     RigidJoint,
     Rot,
     Vector,
@@ -25,6 +27,9 @@ class RB4011Tray(Model):
     dimensions: Vector
 
     def __init__(self, **kwargs):
+        hex_grid_count = Vector(34, 15)
+        hex_grid_radius = 3 * MM
+        hex_grid_spacing = 0.5 * MM
         interface_holes = Vector(3, 2)
         lip_thickness = 2 * MM
         with BuildPart(mode=Mode.PRIVATE):
@@ -76,10 +81,25 @@ class RB4011Tray(Model):
             location *= Rot(Y=180)
             RigidJoint(f"rb4011", joint_location=location)
 
+            # create hex grid
+            face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
+            with BuildSketch(face):
+                with HexLocations(
+                    hex_grid_radius + hex_grid_spacing,
+                    int(hex_grid_count.X),
+                    int(hex_grid_count.Y),
+                ):
+                    RegularPolygon(hex_grid_radius, 6)
+            extrude(amount=-tray_thickness, mode=Mode.SUBTRACT)
+
             # create feet cutouts
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
             location = face.location_at(0.5, 0.0)
             location *= Pos(Y=router.feet_offset)
+            with BuildSketch(location):
+                with GridLocations(router.feet_spacing.X, router.feet_spacing.Y, 2, 2):
+                    Circle((router_feet_diameter + lip_thickness) / 2)
+            extrude(amount=-tray_thickness)
             with BuildSketch(location):
                 with GridLocations(router.feet_spacing.X, router.feet_spacing.Y, 2, 2):
                     Circle(router_feet_diameter / 2)
