@@ -4,11 +4,13 @@ from build123d import (
     Axis,
     BuildPart,
     BuildSketch,
+    HexLocations,
     Location,
     Locations,
     Mode,
     Pos,
     Rectangle,
+    RegularPolygon,
     RigidJoint,
     Rot,
     Vector,
@@ -29,6 +31,9 @@ class GenericHueBridge(Model):
         bridge_tolerance = 0.5 * MM
         with BuildPart(mode=Mode.PRIVATE):
             generic_blank = GenericBlank()
+        hex_grid_count = Vector(13, 11)
+        hex_grid_radius = 3 * MM
+        hex_grid_spacing = 0.5 * MM
         lip_thickness = 2.0 * MM
         tray_thickness = 4.0 * MM
 
@@ -71,6 +76,17 @@ class GenericHueBridge(Model):
             location = face.location_at(0.5, 0.5)
             location *= Rot(Y=180)
             RigidJoint(f"hue-bridge", joint_location=location)
+
+            # create hex grid
+            face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
+            with BuildSketch(face):
+                with HexLocations(
+                    hex_grid_radius + hex_grid_spacing,
+                    int(hex_grid_count.X),
+                    int(hex_grid_count.Y),
+                ):
+                    RegularPolygon(hex_grid_radius, 6)
+            extrude(amount=-tray_thickness, mode=Mode.SUBTRACT)
 
             # create face cutout
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
