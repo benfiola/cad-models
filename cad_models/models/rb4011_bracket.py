@@ -1,25 +1,20 @@
-from build123d import IN, MM, BuildPart, Mode, Vector
+from build123d import MM, BuildPart, Vector
 
 from cad_models.common import Model, ServerRackMountBracket, U, main
-from cad_models.models.rb4011_tray import RB4011Tray
 
 
 class RB4011Bracket(Model):
     def __init__(self, flipped_joints: bool = False, **kwargs):
+        # parameters
+        dimensions = Vector(121.05 * MM, 1 * U, 124.3 * MM)
         interface_holes = Vector(3, 2)
-        with BuildPart(mode=Mode.PRIVATE):
-            tray = RB4011Tray()
 
-        dimensions = Vector(
-            ((19 * IN - tray.dimensions.X) / 2) - (6.0 * MM),
-            1 * U,
-            tray.dimensions.Z - (4.0 * MM),
-        )
         with BuildPart() as builder:
+            # create bracket
             bracket = ServerRackMountBracket(
+                dimensions=dimensions,
                 interface_holes=interface_holes,
                 flipped_joints=flipped_joints,
-                interior_dimensions=dimensions,
             )
             builder.joints.update(bracket.joints)
 

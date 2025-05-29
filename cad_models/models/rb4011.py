@@ -18,19 +18,13 @@ from cad_models.common import Model, main
 
 
 class RB4011(Model):
-    dimensions: Vector
-    feet_diameter: float
-    feet_height: float
-    feet_offset: float
-    feet_spacing: Vector
-
     def __init__(self, **kwargs):
         # parameters
         dimensions = Vector(228 * MM, 26.2 * MM, 117.8 * MM)
         feet_diameter = 14 * MM
         feet_height = 3.5 * MM
         feet_spacing = Vector(162.2 * MM, 65.34 * MM)
-        feet_offset = 9 * MM + (feet_diameter + feet_spacing.Y) / 2
+        feet_offset = 51.16 * MM
 
         with BuildPart() as builder:
             # create router box
@@ -55,12 +49,6 @@ class RB4011(Model):
             extrude(amount=feet_height)
 
         super().__init__(builder.part, **kwargs)
-
-        self.dimensions = dimensions
-        self.feet_diameter = feet_diameter
-        self.feet_height = feet_height
-        self.feet_offset = feet_offset
-        self.feet_spacing = feet_spacing
 
 
 if __name__ == "__main__":

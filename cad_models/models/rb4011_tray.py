@@ -20,50 +20,39 @@ from build123d import (
 )
 
 from cad_models.common import Model, ServerRackMountBlank, U, main
-from cad_models.models.rb4011 import RB4011
 
 
 class RB4011Tray(Model):
-    dimensions: Vector
-
     def __init__(self, **kwargs):
+        # parameters
+        dimensions = Vector(240.5 * MM, 1 * U, 124.3 * MM)
         hex_grid_count = Vector(34, 15)
         hex_grid_radius = 3 * MM
         hex_grid_spacing = 0.5 * MM
         interface_holes = Vector(3, 2)
         lip_thickness = 2 * MM
-        with BuildPart(mode=Mode.PRIVATE):
-            router = RB4011()
-        router_tolerance = 0.5 * MM
+        router_dimensions = Vector(228.5 * MM, 26.7 * MM, 118.3 * MM)
+        router_feet_diameter = 15 * MM
+        router_feet_height = 3.5 * MM
+        router_feet_spacing = Vector(162.2 * MM, 65.34 * MM)
+        router_feet_offset = 51.16 * MM
         tray_thickness = 4.0 * MM
-
-        # derived values
-        router_dimensions = Vector(
-            router.dimensions.X + router_tolerance,
-            router.dimensions.Y + router_tolerance,
-            router.dimensions.Z + router_tolerance,
-        )
-        router_feet_diameter = router.feet_diameter + router_tolerance
-        interior_dimensions = Vector(
-            router_dimensions.X,
-            1 * U,
-            router_dimensions.Z + lip_thickness,
-        )
 
         with BuildPart() as builder:
             blank = ServerRackMountBlank(
-                interface_holes=interface_holes, interior_dimensions=interior_dimensions
+                dimensions=dimensions, interface_holes=interface_holes
             )
             builder.joints.update(blank.joints)
 
             # create tray
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[1]
+            depth = router_dimensions.Z + lip_thickness
             with BuildSketch(face):
                 thickness = tray_thickness + lip_thickness
                 location = Location((0, face.width / 2))
                 with Locations(location):
                     Rectangle(face.length, thickness, align=(Align.CENTER, Align.MAX))
-            extrude(amount=interior_dimensions.Z)
+            extrude(amount=depth)
 
             # create tray mount
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
@@ -95,15 +84,15 @@ class RB4011Tray(Model):
             # create feet cutouts
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
             location = face.location_at(0.5, 0.0)
-            location *= Pos(Y=router.feet_offset)
+            location *= Pos(Y=router_feet_offset)
             with BuildSketch(location):
-                with GridLocations(router.feet_spacing.X, router.feet_spacing.Y, 2, 2):
+                with GridLocations(router_feet_spacing.X, router_feet_spacing.Y, 2, 2):
                     Circle((router_feet_diameter + lip_thickness) / 2)
             extrude(amount=-tray_thickness)
             with BuildSketch(location):
-                with GridLocations(router.feet_spacing.X, router.feet_spacing.Y, 2, 2):
+                with GridLocations(router_feet_spacing.X, router_feet_spacing.Y, 2, 2):
                     Circle(router_feet_diameter / 2)
-            extrude(amount=-router.feet_height, mode=Mode.SUBTRACT)
+            extrude(amount=-router_feet_height, mode=Mode.SUBTRACT)
 
             # create face cutout
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
@@ -117,8 +106,6 @@ class RB4011Tray(Model):
             extrude(amount=-tray_thickness, mode=Mode.SUBTRACT)
 
         super().__init__(builder.part, **kwargs)
-
-        self.dimensions = blank.dimensions
 
 
 if __name__ == "__main__":

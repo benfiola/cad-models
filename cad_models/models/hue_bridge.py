@@ -15,8 +15,6 @@ from cad_models.common import Model, main
 
 
 class HueBridge(Model):
-    dimensions: Vector
-
     def __init__(self, **kwargs):
         # parameters
         dimensions = Vector(90.9 * MM, 26 * MM, 90.1 * MM)
@@ -35,8 +33,6 @@ class HueBridge(Model):
             RigidJoint(f"mount", joint_location=location)
 
         super().__init__(builder.part, **kwargs)
-
-        self.dimensions = dimensions
 
 
 if __name__ == "__main__":

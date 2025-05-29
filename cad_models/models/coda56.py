@@ -1,4 +1,4 @@
-from bd_warehouse.fastener import ClearanceHole, CounterSunkScrew, Screw
+from bd_warehouse.fastener import ClearanceHole, CounterSunkScrew
 from build123d import (
     MM,
     Axis,
@@ -19,7 +19,7 @@ from build123d import (
 from cad_models.common import Model, main
 
 
-class RouterScrew(CounterSunkScrew):
+class Coda56Screw(CounterSunkScrew):
     def __init__(self, **kwargs):
         super().__init__(
             size="M2.5-0.45", length=6 * MM, fastener_type="iso7046", **kwargs
@@ -27,15 +27,9 @@ class RouterScrew(CounterSunkScrew):
 
 
 class Coda56(Model):
-    dimensions: Vector
-    screw: Screw
-    standoff_dimensions: Vector
-    standoff_hole_offset: float
-    standoff_spacing: float
-
     def __init__(self, **kwargs):
         dimensions = Vector(51.5 * MM, 204.1 * MM, 178.34 * MM)
-        screw = RouterScrew()
+        screw = Coda56Screw()
         standoff_dimensions = Vector(8.75 * MM, 14.5 * MM, 8.0 * MM)
         standoff_spacing = 130.8 * MM
         standoff_hole_offset = 1.75 * MM
@@ -69,12 +63,6 @@ class Coda56(Model):
                 RigidJoint(f"mount-{index}", joint_location=location)
 
         super().__init__(builder.part, **kwargs)
-
-        self.dimensions = dimensions
-        self.screw = screw
-        self.standoff_dimensions = standoff_dimensions
-        self.standoff_hole_offset = standoff_hole_offset
-        self.standoff_spacing = standoff_spacing
 
 
 if __name__ == "__main__":

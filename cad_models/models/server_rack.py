@@ -30,13 +30,10 @@ class Mount(Enum):
 class ServerRack(Model):
     def __init__(self, u: int = 16, **kwargs):
         # parameters
-        arm_distance = 19 * IN
-        arm_dimensions = Vector(26.5 * MM, 0, 18.11 * IN)
+        arm_distance = 476.02 * MM
+        arm_dimensions = Vector(26.5 * MM, u * 1.75 * IN, 18.11 * IN)
         hole_offset = 5 * MM
         mount_screw = ServerRackMountScrew()
-
-        # derived values
-        arm_dimensions.Y = u * 1.75 * IN
 
         with BuildPart() as builder:
             # create left arm
@@ -47,7 +44,7 @@ class ServerRack(Model):
                     arm_dimensions.X,
                     arm_dimensions.Z,
                     arm_dimensions.Y,
-                    align=(Align.MAX, Align.CENTER, Align.CENTER),
+                    align=(Align.CENTER, Align.CENTER, Align.CENTER),
                 )
 
             # create mount holes

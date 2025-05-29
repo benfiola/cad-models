@@ -249,14 +249,14 @@ class ServerRackMountBracket(BasePartObject):
 
     def __init__(
         self,
-        interior_dimensions: VectorLike,
+        dimensions: VectorLike,
         ribs: bool = True,
         interface_holes: VectorLike | None = None,
         external: bool = False,
         flipped_joints: bool = False,
         **kwargs,
     ):
-        interior_dimensions = Vector(interior_dimensions)
+        dimensions = Vector(dimensions)
         if interface_holes is not None:
             interface_holes = Vector(interface_holes)
 
@@ -269,16 +269,16 @@ class ServerRackMountBracket(BasePartObject):
         ear_hole_offset = 3.125 * MM
         if external:
             ear_hole_offset = 3 * MM
-        ear_hole_spacing = interior_dimensions.Y - (0.5 * IN)
+        ear_hole_spacing = dimensions.Y - (0.5 * IN)
         with BuildPart(mode=Mode.PRIVATE):
             interface_nut = ServerRackInterfaceNut()
         interface_thickness = 6 * MM
         thickness = 4 * MM
 
-        dimensions = Vector(
-            ear_dimensions.X + interior_dimensions.X + interface_thickness,
-            interior_dimensions.Y,
-            thickness + interior_dimensions.Z,
+        interior_dimensions = Vector(
+            dimensions.X - (ear_dimensions.X + interface_thickness),
+            dimensions.Y,
+            dimensions.Z - thickness,
         )
 
         with BuildPart() as builder:
@@ -390,11 +390,11 @@ class ServerRackMountBlank(BasePartObject):
 
     def __init__(
         self,
+        dimensions: VectorLike,
         interface_holes: VectorLike,
-        interior_dimensions: VectorLike,
         **kwargs,
     ):
-        interior_dimensions = Vector(interior_dimensions)
+        dimensions = Vector(dimensions)
         if interface_holes is not None:
             interface_holes = Vector(interface_holes)
 
@@ -403,10 +403,10 @@ class ServerRackMountBlank(BasePartObject):
         interface_thickness = 6 * MM
         thickness = 4 * MM
 
-        dimensions = Vector(
-            interface_thickness + interior_dimensions.X + interface_thickness,
-            interior_dimensions.Y,
-            thickness + interior_dimensions.Z,
+        interior_dimensions = Vector(
+            dimensions.X - (interface_thickness + interface_thickness),
+            dimensions.Y,
+            dimensions.Z - thickness,
         )
 
         with BuildPart() as builder:

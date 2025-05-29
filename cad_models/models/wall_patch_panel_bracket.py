@@ -39,7 +39,6 @@ class WallPatchPanelBracket(Model):
         mount_screw = ServerRackMountScrew()
         wall_screw = WallScrew()
 
-        # derived values
         arm_dimensions.X = base_dimensions.X
         base_dimensions.Y = mount_hole_spacing + arm_dimensions.Y
 

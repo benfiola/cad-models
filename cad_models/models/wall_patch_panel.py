@@ -49,7 +49,6 @@ class WallPatchPanel(Model):
         hole_spacing = Vector(230 * MM, 70 * MM)
         panel_dimensions = Vector(250 * MM, 90 * MM, 11.25 * MM)
 
-        # derived values
         ear_dimensions.Y = panel_dimensions.Y
 
         with BuildPart() as builder:

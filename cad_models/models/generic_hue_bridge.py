@@ -17,49 +17,37 @@ from build123d import (
     extrude,
 )
 
-from cad_models.common import Model, ServerRackMountBlank, main
-from cad_models.models.generic_blank import GenericBlank
-from cad_models.models.hue_bridge import HueBridge
+from cad_models.common import Model, ServerRackMountBlank, U, main
 
 
 class GenericHueBridge(Model):
-    dimensions: Vector
-
     def __init__(self, **kwargs):
-        with BuildPart(mode=Mode.PRIVATE):
-            bridge = HueBridge()
-        bridge_tolerance = 0.5 * MM
-        with BuildPart(mode=Mode.PRIVATE):
-            generic_blank = GenericBlank()
+        # parameters
+        bridge_dimensions = Vector(91.4 * MM, 26 * MM, 90.6 * MM)
+        dimensions = Vector(145.03 * MM, 1 * U, 154 * MM)
         hex_grid_count = Vector(13, 11)
         hex_grid_radius = 3 * MM
         hex_grid_spacing = 0.5 * MM
+        interface_holes = Vector(2, 2)
         lip_thickness = 2.0 * MM
         tray_thickness = 4.0 * MM
 
-        # derived values
-        bridge_dimensions = Vector(
-            bridge.dimensions.X + bridge_tolerance,
-            bridge.dimensions.Y,
-            bridge.dimensions.Z + bridge_tolerance,
-        )
-        tray_depth = bridge_dimensions.Z + lip_thickness
-
         with BuildPart() as builder:
+            # create blank
             blank = ServerRackMountBlank(
-                interface_holes=generic_blank.interface_holes,
-                interior_dimensions=generic_blank.interior_dimensions,
+                dimensions=dimensions, interface_holes=interface_holes
             )
             builder.joints.update(blank.joints)
 
             # create tray
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[1]
+            depth = bridge_dimensions.Z + lip_thickness
             with BuildSketch(face):
                 thickness = tray_thickness + lip_thickness
                 location = Location((0, face.width / 2))
                 with Locations(location):
                     Rectangle(face.length, thickness, align=(Align.CENTER, Align.MAX))
-            extrude(amount=tray_depth)
+            extrude(amount=depth)
 
             # create tray mount
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
@@ -100,8 +88,6 @@ class GenericHueBridge(Model):
             extrude(amount=-tray_thickness, mode=Mode.SUBTRACT)
 
         super().__init__(builder.part, **kwargs)
-
-        self.dimensions = blank.dimensions
 
 
 if __name__ == "__main__":
