@@ -21,10 +21,9 @@ class RB4011(Model):
     def __init__(self, **kwargs):
         # parameters
         dimensions = Vector(228 * MM, 26.2 * MM, 117.8 * MM)
-        feet_diameter = 14 * MM
-        feet_height = 3.5 * MM
-        feet_spacing = Vector(162.2 * MM, 65.34 * MM)
-        feet_offset = 51.16 * MM
+        foot_dimensions = Vector(14 * MM, 3.5 * MM)
+        foot_offset = 51.16 * MM
+        foot_spacing = Vector(162.2 * MM, 65.34 * MM)
 
         with BuildPart() as builder:
             # create router box
@@ -42,11 +41,11 @@ class RB4011(Model):
             # create feet
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0]
             location = face.location_at(0.5, 0.0)
-            location *= Pos(Y=feet_offset)
+            location *= Pos(Y=foot_offset)
             with BuildSketch(location):
-                with GridLocations(feet_spacing.X, feet_spacing.Y, 2, 2):
-                    Circle(feet_diameter / 2)
-            extrude(amount=feet_height)
+                with GridLocations(foot_spacing.X, foot_spacing.Y, 2, 2):
+                    Circle(foot_dimensions.X / 2)
+            extrude(amount=foot_dimensions.Y)
 
         super().__init__(builder.part, **kwargs)
 

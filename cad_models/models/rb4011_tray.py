@@ -32,10 +32,9 @@ class RB4011Tray(Model):
         interface_holes = Vector(3, 2)
         lip_thickness = 2 * MM
         router_dimensions = Vector(228.5 * MM, 26.7 * MM, 118.3 * MM)
-        router_feet_diameter = 15 * MM
-        router_feet_height = 3.5 * MM
-        router_feet_spacing = Vector(162.2 * MM, 65.34 * MM)
-        router_feet_offset = 51.16 * MM
+        router_foot_dimensions = Vector(15 * MM, 3.5 * MM)
+        router_foot_spacing = Vector(162.2 * MM, 65.34 * MM)
+        router_foot_offset = 51.16 * MM
         tray_thickness = 4.0 * MM
 
         with BuildPart() as builder:
@@ -84,15 +83,15 @@ class RB4011Tray(Model):
             # create feet cutouts
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
             location = face.location_at(0.5, 0.0)
-            location *= Pos(Y=router_feet_offset)
+            location *= Pos(Y=router_foot_offset)
             with BuildSketch(location):
-                with GridLocations(router_feet_spacing.X, router_feet_spacing.Y, 2, 2):
-                    Circle((router_feet_diameter + lip_thickness) / 2)
+                with GridLocations(router_foot_spacing.X, router_foot_spacing.Y, 2, 2):
+                    Circle((router_foot_dimensions.X + lip_thickness) / 2)
             extrude(amount=-tray_thickness)
             with BuildSketch(location):
-                with GridLocations(router_feet_spacing.X, router_feet_spacing.Y, 2, 2):
-                    Circle(router_feet_diameter / 2)
-            extrude(amount=-router_feet_height, mode=Mode.SUBTRACT)
+                with GridLocations(router_foot_spacing.X, router_foot_spacing.Y, 2, 2):
+                    Circle(router_foot_dimensions.X / 2)
+            extrude(amount=-router_foot_dimensions.Y, mode=Mode.SUBTRACT)
 
             # create face cutout
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]

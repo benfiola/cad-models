@@ -4,6 +4,8 @@ from build123d import (
     Axis,
     BuildPart,
     BuildSketch,
+    Circle,
+    GridLocations,
     HexLocations,
     Location,
     Locations,
@@ -24,6 +26,10 @@ class GenericHueBridge(Model):
     def __init__(self, **kwargs):
         # parameters
         bridge_dimensions = Vector(91.4 * MM, 26 * MM, 90.6 * MM)
+        bridge_foot_spacing = Vector(65.24 * MM, 66.82 * MM)
+        bridge_foot_dimensions = Vector(8.5 * MM, 0.9 * MM)
+        bridge_peg_dimensions = Vector(8.2 * MM, 3.2 * MM)
+        bridge_peg_spacing = 41.4 * MM
         dimensions = Vector(145.03 * MM, 1 * U, 154 * MM)
         hex_grid_count = Vector(13, 11)
         hex_grid_radius = 3 * MM
@@ -75,6 +81,25 @@ class GenericHueBridge(Model):
                 ):
                     RegularPolygon(hex_grid_radius, 6)
             extrude(amount=-tray_thickness, mode=Mode.SUBTRACT)
+
+            # create feet standoffs
+            face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
+            with BuildSketch(face):
+                with GridLocations(bridge_foot_spacing.X, bridge_foot_spacing.Y, 2, 2):
+                    Circle((bridge_foot_dimensions.X + lip_thickness) / 2)
+            extrude(amount=-tray_thickness)
+            with BuildSketch(face):
+                with GridLocations(bridge_foot_spacing.X, bridge_foot_spacing.Y, 2, 2):
+                    Circle(bridge_foot_dimensions.X / 2)
+            extrude(amount=-bridge_foot_dimensions.Y, mode=Mode.SUBTRACT)
+
+            # create mount pegs
+            with BuildSketch(face) as build_sketch:
+                with GridLocations(0, bridge_peg_spacing, 2, 2):
+                    Circle((bridge_peg_dimensions.X) / 2)
+            sketch = build_sketch.sketch
+            extrude(amount=-tray_thickness)
+            extrude(sketch, amount=bridge_peg_dimensions.Y)
 
             # create face cutout
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
