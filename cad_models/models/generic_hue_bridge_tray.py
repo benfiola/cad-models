@@ -22,10 +22,10 @@ from build123d import (
 from cad_models.common import Model, ServerRackMountBlank, U, main
 
 
-class GenericHueBridge(Model):
+class GenericHueBridgeTray(Model):
     def __init__(self, **kwargs):
         # parameters
-        bridge_dimensions = Vector(91.4 * MM, 26 * MM, 90.6 * MM)
+        bridge_dimensions = Vector(91.4 * MM, 26 * MM, 91.4 * MM)
         bridge_foot_spacing = Vector(65.24 * MM, 66.82 * MM)
         bridge_foot_dimensions = Vector(8.5 * MM, 0.9 * MM)
         bridge_peg_dimensions = Vector(8.2 * MM, 3.2 * MM)

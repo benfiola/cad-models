@@ -7,6 +7,7 @@ from build123d import (
     GridLocations,
     Location,
     Locations,
+    Mode,
     Plane,
     Pos,
     Rectangle,
@@ -40,7 +41,7 @@ class RpiSsdBracket(Model):
         rpi_standoff_spacing = Vector(49 * MM, 58 * MM)
         screw = BracketScrew()
         ssd_dimensions = Vector(70 * MM, 100 * MM)
-        ssd_hole_spacing = Vector(62.0 * MM, 76.0 * MM)
+        ssd_hole_spacing = Vector(62.0 * MM, 75.0 * MM)
         ssd_hole_offset = 2.5 * MM
         thickness = 4 * MM
 
@@ -52,7 +53,7 @@ class RpiSsdBracket(Model):
 
             # create ssd bracket holes
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
-            with BuildSketch(face):
+            with BuildSketch(face, mode=Mode.PRIVATE):
                 location = Location((0, ssd_hole_offset))
                 with Locations(location):
                     with GridLocations(
