@@ -116,4 +116,4 @@ class GenericHueBridgeTray(Model):
 
 
 if __name__ == "__main__":
-    main(GenericHueBridge())
+    main(GenericHueBridgeTray())

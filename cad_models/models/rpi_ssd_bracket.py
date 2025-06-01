@@ -15,7 +15,7 @@ from build123d import (
     extrude,
 )
 
-from cad_models.common import CaptiveNutSlot, Model, main
+from cad_models.common import CaptiveNutSlot, Iso, Model, main
 
 
 class BracketScrew(PanHeadScrew):
@@ -26,9 +26,18 @@ class BracketScrew(PanHeadScrew):
 
 
 class BracketNut(HexNut):
+    cm_size = "M3-0.5"
+
+    fastener_data = {
+        cm_size: {
+            f"custom:{Iso.NutWidth}": "5.5",
+            f"custom:{Iso.NutHeight}": "2.5",
+        }
+    }
+
     def __init__(self, **kwargs):
-        kwargs["size"] = "M3-0.5"
-        kwargs["fastener_type"] = "iso4032"
+        kwargs["size"] = self.cm_size
+        kwargs["fastener_type"] = "custom"
         super().__init__(**kwargs)
 
 
@@ -41,7 +50,7 @@ class RpiSsdBracket(Model):
         rpi_standoff_spacing = Vector(49 * MM, 58 * MM)
         screw = BracketScrew()
         ssd_dimensions = Vector(70 * MM, 100 * MM)
-        ssd_hole_spacing = Vector(62.0 * MM, 75.0 * MM)
+        ssd_hole_spacing = Vector(62.0 * MM, 77.0 * MM)
         ssd_hole_offset = 2.5 * MM
         thickness = 4 * MM
 
