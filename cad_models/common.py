@@ -77,36 +77,6 @@ class Iso:
     SlotWidth: Literal["n"] = "n"
 
 
-class WallScrew(PanHeadScrew):
-    """
-    Screw used in conjunction with wall anchors to secure an assembly to the wall.
-    """
-
-    cm_size = "0.151-16"
-    cm_diameter = cm_size.split("-")[0]
-
-    countersink_profile = Screw.default_countersink_profile
-    # #7 isn't listed in bd_warehouses known imperial sizes - use inches for diameter
-    fastener_data = {
-        f"{cm_size}": {
-            f"custom:{Iso.HeadDiameter}": "0.311",
-            f"custom:{Iso.HeadHeight}": "0.089",
-            f"custom:{Iso.HeadRadius}": "0.049",
-            f"custom:{Iso.SlotDepth}": "0.054",
-            f"custom:{Iso.SlotWidth}": "0.048",
-        },
-    }
-    clearance_hole_data = {
-        cm_diameter: {"Close": 0.168 * IN, "Normal": 0.190 * IN, "Loose": 0.205 * IN}
-    }
-
-    def __init__(self, **kwargs):
-        kwargs["size"] = self.cm_size
-        kwargs["length"] = 1.125 * IN
-        kwargs["fastener_type"] = "custom"
-        super().__init__(**kwargs)
-
-
 class ServerRackMountScrew(Screw):
     """
     Screw used to secure a rack-mounted assembly to the rack mount itself
