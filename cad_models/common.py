@@ -361,7 +361,8 @@ class ServerRackMountBlank(BasePartObject):
     def __init__(
         self,
         dimensions: VectorLike,
-        interface_holes: VectorLike,
+        interface_holes: VectorLike | None = None,
+        interface_hole_captive_nut: bool = False,
         **kwargs,
     ):
         dimensions = Vector(dimensions)
@@ -369,7 +370,9 @@ class ServerRackMountBlank(BasePartObject):
             interface_holes = Vector(interface_holes)
 
         with BuildPart(mode=Mode.PRIVATE):
+            interface_nut = ServerRackInterfaceNut()
             interface_screw = ServerRackInterfaceScrew()
+
         interface_thickness = 6 * MM
         thickness = 4 * MM
 
@@ -404,32 +407,43 @@ class ServerRackMountBlank(BasePartObject):
             extrude(amount=dimensions.Y)
 
             # create interface holes
-            face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
-            with BuildSketch(face, mode=Mode.PRIVATE):
-                width = face.length
-                height = face.width - 2 * thickness
-                x_spacing = width / int(interface_holes.X)
-                y_spacing = height / int(interface_holes.Y)
-                with GridLocations(
-                    x_spacing,
-                    y_spacing,
-                    int(interface_holes.X),
-                    int(interface_holes.Y),
-                ) as grid_locs:
-                    hole_locations = grid_locs.locations
-            hole_locations = sorted(
-                hole_locations, key=row_major(x_dir=(0, 1, 0), y_dir=(0, 0, -1))
-            )
-            mirror_plane = Plane(face.offset(interior_dimensions.X / 2))
-            for hole_index, hole_location in enumerate(hole_locations):
-                with Locations(hole_location):
-                    hole = ClearanceHole(interface_screw, depth=interface_thickness)
-                mirror(hole, mirror_plane, mode=Mode.SUBTRACT)
-                location = Location(hole_location)
-                location *= Pos(Z=-interface_thickness)
-                RigidJoint(f"interface-0-{hole_index}", joint_location=location)
-                location *= Pos(Z=dimensions.X)
-                RigidJoint(f"interface-1-{hole_index}", joint_location=location)
+            if interface_holes:
+                face = builder.part.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
+                with BuildSketch(face, mode=Mode.PRIVATE):
+                    width = face.length
+                    height = face.width - 2 * thickness
+                    x_spacing = width / int(interface_holes.X)
+                    y_spacing = height / int(interface_holes.Y)
+                    with GridLocations(
+                        x_spacing,
+                        y_spacing,
+                        int(interface_holes.X),
+                        int(interface_holes.Y),
+                    ) as grid_locs:
+                        hole_locations = grid_locs.locations
+                hole_locations = sorted(
+                    hole_locations, key=row_major(x_dir=(0, 1, 0), y_dir=(0, 0, -1))
+                )
+                mirror_plane = Plane(face.offset(interior_dimensions.X / 2))
+                for hole_index, hole_location in enumerate(hole_locations):
+                    with Locations(hole_location):
+                        if interface_hole_captive_nut:
+                            hole = ClearanceHole(
+                                interface_nut,
+                                captive_nut=True,
+                                depth=interface_thickness,
+                            )
+                        else:
+                            hole = ClearanceHole(
+                                interface_screw,
+                                depth=interface_thickness,
+                            )
+                    mirror(hole, mirror_plane, mode=Mode.SUBTRACT)
+                    location = Location(hole_location)
+                    location *= Pos(Z=-interface_thickness)
+                    RigidJoint(f"interface-0-{hole_index}", joint_location=location)
+                    location *= Pos(Z=dimensions.X)
+                    RigidJoint(f"interface-1-{hole_index}", joint_location=location)
 
         super().__init__(builder.part, **kwargs)
 

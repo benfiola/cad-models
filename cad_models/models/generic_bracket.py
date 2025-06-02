@@ -4,7 +4,11 @@ from cad_models.common import Model, ServerRackMountBracket, U, main
 
 
 class GenericBracket(Model):
-    def __init__(self, flipped_joints: bool = False, **kwargs):
+    def __init__(
+        self,
+        flipped_joints: bool = False,
+        **kwargs
+    ):
         # parameters
         dimensions = Vector(23.75, 1 * U, 154 * MM)
         interface_holes = Vector(2, 2)
