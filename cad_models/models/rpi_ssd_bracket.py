@@ -45,8 +45,8 @@ class RpiSsdBracket(Model):
     def __init__(self, **kwargs):
         # parameters
         nut = BracketNut()
-        rpi_standoff_dimensions = Vector(7 * MM, 7 * MM, 5 * MM)
-        rpi_standoff_offset = 6.5 * MM
+        rpi_standoff_dimensions = Vector(8.5 * MM, 8.5 * MM, 5 * MM)
+        rpi_standoff_offset = 5.5 * MM
         rpi_standoff_spacing = Vector(49 * MM, 58 * MM)
         screw = BracketScrew()
         ssd_dimensions = Vector(70 * MM, 100 * MM)
@@ -75,7 +75,7 @@ class RpiSsdBracket(Model):
             # create raspberry pi standoffs
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
             with BuildSketch(face):
-                location = Location((0, -rpi_standoff_offset))
+                location = Location((0, rpi_standoff_offset))
                 with Locations(location):
                     with GridLocations(
                         rpi_standoff_spacing.X, rpi_standoff_spacing.Y, 2, 2
