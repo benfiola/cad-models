@@ -215,8 +215,6 @@ class CaptiveNutSlot(BasePartObject):
 
 
 class ServerRackMountBracket(BasePartObject):
-    dimensions: Vector
-
     def __init__(
         self,
         dimensions: VectorLike,
@@ -352,12 +350,8 @@ class ServerRackMountBracket(BasePartObject):
 
         super().__init__(builder.part, **kwargs)
 
-        self.dimensions = dimensions
-
 
 class ServerRackMountBlank(BasePartObject):
-    dimensions: Vector
-
     def __init__(
         self,
         dimensions: VectorLike,
@@ -446,8 +440,6 @@ class ServerRackMountBlank(BasePartObject):
                     RigidJoint(f"interface-1-{hole_index}", joint_location=location)
 
         super().__init__(builder.part, **kwargs)
-
-        self.dimensions = dimensions
 
 
 def row_major(x_dir: VectorLike | None = None, y_dir: VectorLike | None = None):

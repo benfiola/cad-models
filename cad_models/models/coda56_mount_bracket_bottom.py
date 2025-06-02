@@ -25,7 +25,7 @@ from cad_models.common import Model, ServerRackMountBracket, U, main
 from cad_models.models.coda56 import Coda56Screw
 
 
-class Coda56MountBottomBracket(Model):
+class Coda56MountBracketBottom(Model):
     def __init__(self, **kwargs):
         # parameters
         bracket_thickness = 5.0 * MM
@@ -116,4 +116,4 @@ class Coda56MountBottomBracket(Model):
 
 
 if __name__ == "__main__":
-    main(Coda56MountBottomBracket())
+    main(Coda56MountBracketBottom())

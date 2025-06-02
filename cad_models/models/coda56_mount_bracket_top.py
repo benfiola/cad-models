@@ -21,7 +21,7 @@ from build123d import (
 from cad_models.common import Model, ServerRackMountBracket, U, main
 
 
-class Coda56MountTopBracket(Model):
+class Coda56MountBracketTop(Model):
     def __init__(self, **kwargs):
         bracket_thickness = 5.0 * MM
         corner_radius = 3.0 * MM
@@ -90,4 +90,4 @@ class Coda56MountTopBracket(Model):
 
 
 if __name__ == "__main__":
-    main(Coda56MountTopBracket())
+    main(Coda56MountBracketTop())

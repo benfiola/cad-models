@@ -2,8 +2,8 @@ from build123d import Color, Compound, RigidJoint
 
 from cad_models.common import main
 from cad_models.models.coda56 import Coda56
-from cad_models.models.coda56_mount_bottom_bracket import Coda56MountBottomBracket
-from cad_models.models.coda56_mount_top_bracket import Coda56MountTopBracket
+from cad_models.models.coda56_mount_bracket_bottom import Coda56MountBracketBottom
+from cad_models.models.coda56_mount_bracket_top import Coda56MountBracketTop
 from cad_models.models.server_rack import ServerRack
 
 
@@ -12,13 +12,13 @@ class Coda56Mount(Compound):
     def __init__(self):
         server_rack = ServerRack(u=6, color=Color("black", alpha=0.3))
 
-        top_bracket = Coda56MountTopBracket()
+        top_bracket = Coda56MountBracketTop()
         for hole in range(0, 2):
             rack_joint: RigidJoint = server_rack.joints[f"mount-1-1-{hole}"]
             item_joint: RigidJoint = top_bracket.joints[f"server-rack-{hole}"]
             rack_joint.connect_to(item_joint)
 
-        bottom_bracket = Coda56MountBottomBracket()
+        bottom_bracket = Coda56MountBracketBottom()
         for hole in range(0, 2):
             rack_joint: RigidJoint = server_rack.joints[f"mount-4-1-{hole}"]
             item_joint: RigidJoint = bottom_bracket.joints[f"server-rack-{hole}"]
