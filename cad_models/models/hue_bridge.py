@@ -1,15 +1,19 @@
 from build123d import (
     MM,
+    Align,
     Axis,
     BuildPart,
     BuildSketch,
     Circle,
     GridLocations,
+    Locations,
     Mode,
     Plane,
+    Pos,
     Rectangle,
     RigidJoint,
     Rot,
+    SlotOverall,
     Vector,
     extrude,
 )
@@ -23,7 +27,10 @@ class HueBridge(Model):
         dimensions = Vector(91.82 * MM, 26.9 * MM, 89.42 * MM)
         foot_spacing = Vector(65.24 * MM, 66.82 * MM)
         foot_dimensions = Vector(7.5 * MM, 0.9 * MM)
-        mount_dimensions = Vector(9.2 * MM, 4.2 * MM)
+        mount_slot_outer_width = 9.2 * MM
+        mount_slot_inner_width = 5.0 * MM
+        mount_slot_length = 17 * MM
+        mount_slot_depth = 4.2 * MM
         mount_spacing = 41.4 * MM
 
         with BuildPart() as builder:
@@ -49,9 +56,16 @@ class HueBridge(Model):
             # create mounts
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-2]
             with BuildSketch(face):
-                with GridLocations(0, mount_spacing, 1, 2):
-                    Circle(mount_dimensions.X / 2)
-            extrude(amount=-mount_dimensions.Y, mode=Mode.SUBTRACT)
+                with GridLocations(0, mount_spacing, 1, 2) as grid_locs:
+                    back, front = grid_locs.local_locations
+                with Locations(back):
+                    SlotOverall(mount_slot_length, mount_slot_outer_width, rotation=90)
+                with Locations(front):
+                    SlotOverall(mount_slot_length, mount_slot_inner_width, rotation=90)
+                front *= Pos(Y=-mount_slot_length / 2)
+                with Locations(front):
+                    Circle(mount_slot_outer_width / 2, align=(Align.CENTER, Align.MIN))
+            extrude(amount=-mount_slot_depth, mode=Mode.SUBTRACT)
 
         super().__init__(builder.part, **kwargs)
 
