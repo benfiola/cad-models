@@ -31,7 +31,7 @@ class HueBridge(Model):
         mount_slot_inner_width = 5.0 * MM
         mount_slot_length = 17 * MM
         mount_slot_depth = 4.2 * MM
-        mount_spacing = 41.4 * MM
+        mount_spacing = 49.5 * MM
 
         with BuildPart() as builder:
             # create bridge box

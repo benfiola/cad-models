@@ -7,7 +7,7 @@ from cad_models.models.hue_bridge import HueBridge
 from cad_models.models.server_rack import ServerRack
 
 
-class GenericBlankMount(Compound):
+class GenericHueBridgeMount(Compound):
     def __init__(self):
         server_rack = ServerRack(u=3, color=Color("black", alpha=0.3))
 
@@ -72,4 +72,4 @@ class GenericBlankMount(Compound):
 
 
 if __name__ == "__main__":
-    main(GenericBlankMount())
+    main(GenericHueBridgeMount())
