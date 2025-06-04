@@ -25,16 +25,15 @@ from cad_models.common import Model, ServerRackMountBlank, U, main
 class ThinkcentreTray(Model):
     def __init__(self, **kwargs):
         # parameters
-        dimensions = Vector(240.5 * MM, 1 * U, 124.3 * MM)
-        hex_grid_count = Vector(34, 15)
+        dimensions = Vector(191 * MM, 1 * U, 189 * MM)
+        hex_grid_count = Vector(26, 24)
         hex_grid_radius = 3 * MM
         hex_grid_spacing = 0.5 * MM
         interface_holes = Vector(3, 2)
         lip_thickness = 2 * MM
-        router_dimensions = Vector(228.5 * MM, 26.7 * MM, 118.3 * MM)
-        router_foot_dimensions = Vector(15 * MM, 3.5 * MM)
-        router_foot_spacing = Vector(162.2 * MM, 65.34 * MM)
-        router_foot_offset = 51.16 * MM
+        thinkcentre_dimensions = Vector(179 * MM, 34.5 * MM, 183 * MM)
+        thinkcentre_foot_dimensions = Vector(14 * MM, 2.5 * MM)
+        thinkcentre_foot_spacing = Vector(162.2 * MM, 164.34 * MM)
         tray_thickness = 4.0 * MM
 
         with BuildPart() as builder:
@@ -45,7 +44,7 @@ class ThinkcentreTray(Model):
 
             # create tray
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[1]
-            depth = router_dimensions.Z + lip_thickness
+            depth = thinkcentre_dimensions.Z + lip_thickness
             with BuildSketch(face):
                 thickness = tray_thickness + lip_thickness
                 location = Location((0, face.width / 2))
@@ -59,8 +58,8 @@ class ThinkcentreTray(Model):
                 location = Location((0, -face.width / 2))
                 with Locations(location):
                     Rectangle(
-                        router_dimensions.X,
-                        router_dimensions.Z,
+                        thinkcentre_dimensions.X,
+                        thinkcentre_dimensions.Z,
                         align=(Align.CENTER, Align.MIN),
                     )
             tray_mount = extrude(amount=-lip_thickness, mode=Mode.SUBTRACT)
@@ -82,24 +81,26 @@ class ThinkcentreTray(Model):
 
             # create feet cutouts
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
-            location = face.location_at(0.5, 0.0)
-            location *= Pos(Y=router_foot_offset)
-            with BuildSketch(location):
-                with GridLocations(router_foot_spacing.X, router_foot_spacing.Y, 2, 2):
-                    Circle((router_foot_dimensions.X + lip_thickness) / 2)
+            with BuildSketch(face):
+                with GridLocations(
+                    thinkcentre_foot_spacing.X, thinkcentre_foot_spacing.Y, 2, 2
+                ):
+                    Circle((thinkcentre_foot_dimensions.X + lip_thickness) / 2)
             extrude(amount=-tray_thickness)
-            with BuildSketch(location):
-                with GridLocations(router_foot_spacing.X, router_foot_spacing.Y, 2, 2):
-                    Circle(router_foot_dimensions.X / 2)
-            extrude(amount=-router_foot_dimensions.Y, mode=Mode.SUBTRACT)
+            with BuildSketch(face):
+                with GridLocations(
+                    thinkcentre_foot_spacing.X, thinkcentre_foot_spacing.Y, 2, 2
+                ):
+                    Circle(thinkcentre_foot_dimensions.X / 2)
+            extrude(amount=-thinkcentre_foot_dimensions.Y, mode=Mode.SUBTRACT)
 
             # create face cutout
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
             with BuildSketch(face):
                 location = Location((0, face.width / 2))
                 location *= Pos(Y=-(tray_thickness + lip_thickness))
-                width = router_dimensions.X - (lip_thickness * 2)
-                height = router_dimensions.Y - (lip_thickness * 2)
+                width = thinkcentre_dimensions.X - (lip_thickness * 2)
+                height = thinkcentre_dimensions.Y - (lip_thickness * 2)
                 with Locations(location):
                     Rectangle(width, height, align=(Align.CENTER, Align.MAX))
             extrude(amount=-tray_thickness, mode=Mode.SUBTRACT)
