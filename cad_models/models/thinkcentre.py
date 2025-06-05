@@ -3,12 +3,13 @@ from build123d import (
     Axis,
     BuildPart,
     BuildSketch,
-    Circle,
     GridLocations,
     Plane,
+    Pos,
     Rectangle,
     RigidJoint,
     Rot,
+    SlotOverall,
     Vector,
     extrude,
 )
@@ -20,8 +21,9 @@ class Thinkcentre(Model):
     def __init__(self, **kwargs):
         # parameters
         dimensions = Vector(179 * MM, 34.5 * MM, 183 * MM)
-        foot_dimensions = Vector(14 * MM, 2.5 * MM)
-        foot_spacing = Vector(162.2 * MM, 164.34 * MM)
+        foot_dimensions = Vector(15 * MM, 6.5 * MM, 2.5 * MM)
+        foot_spacing = Vector(162.5 * MM, 133 * MM)
+        foot_offset = 0.5 * MM
 
         with BuildPart() as builder:
             # create router box
@@ -39,10 +41,11 @@ class Thinkcentre(Model):
             # create feet
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0]
             location = face.location_at(0.5, 0.5)
+            location *= Pos(Y=-foot_offset)
             with BuildSketch(location):
                 with GridLocations(foot_spacing.X, foot_spacing.Y, 2, 2):
-                    Circle(foot_dimensions.X / 2)
-            extrude(amount=foot_dimensions.Y)
+                    SlotOverall(foot_dimensions.X, foot_dimensions.Y, rotation=90)
+            extrude(amount=foot_dimensions.Z)
 
         super().__init__(builder.part, **kwargs)
 

@@ -4,7 +4,6 @@ from build123d import (
     Axis,
     BuildPart,
     BuildSketch,
-    Circle,
     GridLocations,
     HexLocations,
     Location,
@@ -15,6 +14,7 @@ from build123d import (
     RegularPolygon,
     RigidJoint,
     Rot,
+    SlotOverall,
     Vector,
     extrude,
 )
@@ -32,8 +32,9 @@ class ThinkcentreTray(Model):
         interface_holes = Vector(3, 2)
         lip_thickness = 2 * MM
         thinkcentre_dimensions = Vector(179 * MM, 34.5 * MM, 183 * MM)
-        thinkcentre_foot_dimensions = Vector(14 * MM, 2.5 * MM)
-        thinkcentre_foot_spacing = Vector(162.2 * MM, 164.34 * MM)
+        thinkcentre_foot_dimensions = Vector(15 * MM, 6.5 * MM, 2.5 * MM)
+        thinkcentre_foot_spacing = Vector(162.5 * MM, 133 * MM)
+        thinkcentre_foot_offset = 0.5 * MM
         tray_thickness = 4.0 * MM
 
         with BuildPart() as builder:
@@ -81,18 +82,27 @@ class ThinkcentreTray(Model):
 
             # create feet cutouts
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
+            with BuildSketch(face, mode=Mode.PRIVATE):
+                location = Location((0, -thinkcentre_foot_offset))
+                with Locations(location):
+                    with GridLocations(
+                        thinkcentre_foot_spacing.X, thinkcentre_foot_spacing.Y, 2, 2
+                    ) as grid_locs:
+                        locations = grid_locs.local_locations
             with BuildSketch(face):
-                with GridLocations(
-                    thinkcentre_foot_spacing.X, thinkcentre_foot_spacing.Y, 2, 2
-                ):
-                    Circle((thinkcentre_foot_dimensions.X + lip_thickness) / 2)
+                with Locations(*locations):
+                    width = thinkcentre_foot_dimensions.X + lip_thickness
+                    length = thinkcentre_foot_dimensions.Y + lip_thickness
+                    SlotOverall(width, length, rotation=90)
             extrude(amount=-tray_thickness)
             with BuildSketch(face):
-                with GridLocations(
-                    thinkcentre_foot_spacing.X, thinkcentre_foot_spacing.Y, 2, 2
-                ):
-                    Circle(thinkcentre_foot_dimensions.X / 2)
-            extrude(amount=-thinkcentre_foot_dimensions.Y, mode=Mode.SUBTRACT)
+                with Locations(*locations):
+                    SlotOverall(
+                        thinkcentre_foot_dimensions.X,
+                        thinkcentre_foot_dimensions.Y,
+                        rotation=90,
+                    )
+            extrude(amount=-thinkcentre_foot_dimensions.Z, mode=Mode.SUBTRACT)
 
             # create face cutout
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
