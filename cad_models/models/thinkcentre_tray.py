@@ -25,14 +25,14 @@ from cad_models.common import Model, ServerRackMountBlank, U, main
 class ThinkcentreTray(Model):
     def __init__(self, **kwargs):
         # parameters
-        dimensions = Vector(191 * MM, 1 * U, 189 * MM)
+        dimensions = Vector(191.5 * MM, 1 * U, 189.5 * MM)
         hex_grid_count = Vector(26, 24)
         hex_grid_radius = 3 * MM
         hex_grid_spacing = 0.5 * MM
         interface_holes = Vector(3, 2)
         lip_thickness = 2 * MM
-        thinkcentre_dimensions = Vector(179 * MM, 34.5 * MM, 183 * MM)
-        thinkcentre_foot_dimensions = Vector(15 * MM, 6.5 * MM, 2.5 * MM)
+        thinkcentre_dimensions = Vector(179.5 * MM, 34.5 * MM, 183.5 * MM)
+        thinkcentre_foot_dimensions = Vector(16.0 * MM, 7.5 * MM, 2.5 * MM)
         thinkcentre_foot_spacing = Vector(162.5 * MM, 133 * MM)
         thinkcentre_foot_offset = 0.5 * MM
         tray_thickness = 4.0 * MM
