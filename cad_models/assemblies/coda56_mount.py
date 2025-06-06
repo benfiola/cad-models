@@ -1,13 +1,13 @@
-from build123d import Color, Compound, RigidJoint
+from build123d import Color, RigidJoint
 
-from cad_models.common import main
+from cad_models.common import Assembly, main
 from cad_models.models.coda56 import Coda56
 from cad_models.models.coda56_mount_bracket_bottom import Coda56MountBracketBottom
 from cad_models.models.coda56_mount_bracket_top import Coda56MountBracketTop
 from cad_models.models.server_rack import ServerRack
 
 
-class Coda56Mount(Compound):
+class Coda56Mount(Assembly):
 
     def __init__(self):
         server_rack = ServerRack(u=6, color=Color("black", alpha=0.3))

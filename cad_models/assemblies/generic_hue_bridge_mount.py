@@ -1,13 +1,13 @@
-from build123d import Color, Compound, RigidJoint
+from build123d import Color, RigidJoint
 
-from cad_models.common import main
+from cad_models.common import Assembly, main
 from cad_models.models.generic_bracket import GenericBracket
 from cad_models.models.generic_hue_bridge_tray import GenericHueBridgeTray
 from cad_models.models.hue_bridge import HueBridge
 from cad_models.models.server_rack import ServerRack
 
 
-class GenericHueBridgeMount(Compound):
+class GenericHueBridgeMount(Assembly):
     def __init__(self):
         server_rack = ServerRack(u=3, color=Color("black", alpha=0.3))
 

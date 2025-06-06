@@ -1,13 +1,13 @@
-from build123d import Color, Compound, RigidJoint
+from build123d import Color, RigidJoint
 
-from cad_models.common import main
+from cad_models.common import Assembly, main
 from cad_models.models.generic_blank import GenericBlank
 from cad_models.models.generic_blank_captive import GenericBlankCaptive
 from cad_models.models.generic_bracket import GenericBracket
 from cad_models.models.server_rack import ServerRack
 
 
-class GenericBlankMount(Compound):
+class GenericBlankMount(Assembly):
     def __init__(self):
         server_rack = ServerRack(u=3, color=Color("black", alpha=0.3))
 

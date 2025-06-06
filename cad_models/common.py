@@ -54,7 +54,7 @@ U = 1.75 * IN
 
 class Model(Solid):
     """
-    Sold is subclassed to:
+    Solid is subclassed to:
 
     * Streamline kwargs processing
     * Help identify user-created models in the project (- useful for building a CLI)
@@ -64,6 +64,16 @@ class Model(Solid):
         kwargs["obj"] = item.wrapped
         kwargs["joints"] = item.joints
         super().__init__(**kwargs)
+
+
+class Assembly(Compound):
+    """
+    Compound is subclassed to:
+
+    * Help identify user-created assemblies in the project (- useful for building a CLI)
+    """
+
+    pass
 
 
 class Iso:

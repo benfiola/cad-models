@@ -1,12 +1,12 @@
 from build123d import Color, Compound, RigidJoint
 
-from cad_models.common import main
+from cad_models.common import Assembly, main
 from cad_models.models.mt6000 import MT6000
 from cad_models.models.mt6000_mount import MT6000MountBracket
 from cad_models.models.server_rack import ServerRack
 
 
-class MT6000Mount(Compound):
+class MT6000Mount(Assembly):
     def __init__(self):
         server_rack = ServerRack(u=3, color=Color("black", alpha=0.3))
 

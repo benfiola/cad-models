@@ -1,13 +1,13 @@
 from build123d import Color, Compound, RigidJoint
 
-from cad_models.common import main
+from cad_models.common import Assembly, main
 from cad_models.models.rb4011 import RB4011
 from cad_models.models.rb4011_bracket import RB4011Bracket
 from cad_models.models.rb4011_tray import RB4011Tray
 from cad_models.models.server_rack import ServerRack
 
 
-class RB4011Mount(Compound):
+class RB4011Mount(Assembly):
     def __init__(self):
         server_rack = ServerRack(u=3, color=Color("black", alpha=0.3))
 

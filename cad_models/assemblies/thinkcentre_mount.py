@@ -1,6 +1,6 @@
 from build123d import Color, Compound, RigidJoint
 
-from cad_models.common import main
+from cad_models.common import Assembly, main
 from cad_models.models.server_rack import ServerRack
 from cad_models.models.thinkcentre import Thinkcentre
 from cad_models.models.thinkcentre_bracket import ThinkcentreBracket
@@ -8,7 +8,7 @@ from cad_models.models.thinkcentre_bracket_power import ThinkcentreBracketPower
 from cad_models.models.thinkcentre_tray import ThinkcentreTray
 
 
-class ThinkcentreMount(Compound):
+class ThinkcentreMount(Assembly):
     def __init__(self):
         server_rack = ServerRack(u=3, color=Color("black", alpha=0.3))
 
