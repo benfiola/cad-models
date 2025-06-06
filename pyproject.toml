@@ -1,5 +1,5 @@
 [project]
-name="models"
+name="cad-models"
 version="0.0.0"
 dependencies=[
     "bd_warehouse @ git+https://github.com/gumyr/bd_warehouse@18d0d5d09724f388bc5c6801f25dd8ebf2a945df",
