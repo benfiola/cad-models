@@ -32,6 +32,7 @@ class Test(Model):
         rpi_magnet_offset = 0.25 * MM
         rpi_magnet_standoff_corner_radius = 2.0 * MM
         rpi_magnet_standoff_dimensions = Vector(9.5 * MM, 10 * MM, 5 * MM)
+        rpi_mount_cutout_width = 60 * MM
         rpi_power_switch_dimensions = Vector(62.5 * MM, 19.6 * MM)
         rpi_power_switch_inset = 3.5
         rpi_power_switch_spacing = 5 * MM
@@ -62,16 +63,20 @@ class Test(Model):
             face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
             tray_face = face
             with BuildSketch(face):
-                location = Location((0, -face.width / 2))
-                location *= Pos(Y=rpi_power_switch_dimensions.Y)
-                location *= Pos(Y=rpi_power_switch_spacing)
-                location *= Pos(Y=rpi_dimensions.Z / 2)
+                location = Location((0, face.width / 2))
+                location *= Pos(Y=-lip_thickness)
+                location *= Pos(Y=-rpi_dimensions.Z / 2)
                 with Locations(location) as locs:
                     rpi_mount_local_location = locs.local_locations[0]
+                    rpi_mount_location = locs.locations[0]
                     Rectangle(
                         rpi_dimensions.X,
                         rpi_dimensions.Z,
                     )
+                location = Location((0, face.width / 2))
+                location *= Pos(Y=-lip_thickness / 2)
+                with Locations(location):
+                    Rectangle(rpi_mount_cutout_width, lip_thickness)
             rpi_mount = extrude(amount=-lip_thickness, mode=Mode.SUBTRACT)
 
             # create magnet standoffs
