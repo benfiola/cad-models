@@ -218,6 +218,14 @@ class CaptiveNutSlot(BasePartObject):
 
 
 class ServerRackMountBracket(BasePartObject):
+    """
+    A common bracket used for almost all server rack mount parts.
+
+    These brackets need to be consistent for interface hole alignment
+    as well as general aesthetics - so it made sense to derive all server
+    rack mount brackets from a common component.
+    """
+
     def __init__(
         self,
         dimensions: VectorLike,
@@ -355,6 +363,17 @@ class ServerRackMountBracket(BasePartObject):
 
 
 class ServerRackMountBlank(BasePartObject):
+    """
+    A common blank used for almost all server rack tray parts.
+
+    Most server rack tray parts will start with this blank, extrude
+    a tray from its inner horizontal face, and work directly with that surface.
+
+    Much like the `ServerRackMountBracket` - these blanks need to
+    be consistent for interface hole alignment and aesthetics - so it made
+    sense to derive all trays from a common blank.
+    """
+
     def __init__(
         self,
         dimensions: VectorLike,
@@ -526,6 +545,10 @@ def centered_point_list(*points: tuple[float, float]) -> Iterable[tuple[float, f
 
 
 def filter_by_edge_length(length: float, tolerance: float = 0.001) -> ShapePredicate:
+    """
+    Helper `ShapePredicate` that filters edges by a certain length given a tolerance.
+    """
+
     def inner(shape: Shape) -> bool:
         if not isinstance(shape, Edge):
             raise ValueError(f"not an edge: {shape}")
