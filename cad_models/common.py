@@ -20,6 +20,7 @@ from build123d import (
     BuildPart,
     BuildSketch,
     Compound,
+    Edge,
     Face,
     GridLocations,
     Line,
@@ -35,6 +36,8 @@ from build123d import (
     RigidJoint,
     Rot,
     RotationLike,
+    Shape,
+    ShapePredicate,
     SlotOverall,
     Solid,
     Triangle,
@@ -520,6 +523,15 @@ def centered_point_list(*points: tuple[float, float]) -> Iterable[tuple[float, f
     for point in points:
         to_return.append((point[0] - offset_x, point[1] - offset_y))
     return to_return
+
+
+def filter_by_edge_length(length: float) -> ShapePredicate:
+    def inner(shape: Shape) -> bool:
+        if not isinstance(shape, Edge):
+            raise ValueError(f"not an edge: {shape}")
+        return shape.length == length
+
+    return inner
 
 
 def main(model: Solid | Compound):
