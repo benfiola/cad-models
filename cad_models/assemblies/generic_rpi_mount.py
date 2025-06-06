@@ -3,6 +3,7 @@ from build123d import Color, Compound, RigidJoint
 from cad_models.common import main
 from cad_models.models.generic_bracket import GenericBracket
 from cad_models.models.generic_rpi_tray import GenericRpiTray
+from cad_models.models.generic_rpi_tray_captive import GenericRpiTrayCaptive
 from cad_models.models.rpi import RaspberryPi
 from cad_models.models.server_rack import ServerRack
 
@@ -45,7 +46,7 @@ class GenericRpiMount(Compound):
         tray_joint: RigidJoint = tray_3.joints["rpi"]
         tray_joint.connect_to(bridge_joint)
 
-        tray_2 = GenericRpiTray()
+        tray_2 = GenericRpiTrayCaptive()
         for hole in range(0, 4):
             existing_tray_joint: RigidJoint = tray_1.joints[f"interface-1-{hole}"]
             new_tray_joint: RigidJoint = tray_2.joints[f"interface-0-{hole}"]

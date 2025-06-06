@@ -525,11 +525,13 @@ def centered_point_list(*points: tuple[float, float]) -> Iterable[tuple[float, f
     return to_return
 
 
-def filter_by_edge_length(length: float) -> ShapePredicate:
+def filter_by_edge_length(length: float, tolerance: float = 0.001) -> ShapePredicate:
     def inner(shape: Shape) -> bool:
         if not isinstance(shape, Edge):
             raise ValueError(f"not an edge: {shape}")
-        return shape.length == length
+        difference = shape.length - length
+        value = -tolerance < difference < tolerance
+        return value
 
     return inner
 

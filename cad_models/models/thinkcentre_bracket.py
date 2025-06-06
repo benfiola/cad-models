@@ -29,7 +29,7 @@ class ThinkcentreBracket(Model):
         **kwargs,
     ):
         # parameters
-        dimensions = Vector(145.8 * MM, 1 * U, 189 * MM)
+        dimensions = Vector(145.55 * MM, 1 * U, 189.5 * MM)
         face_thickness = 4 * MM
         with BuildPart(mode=Mode.PRIVATE):
             base_keystone = KeystoneReceiver()
