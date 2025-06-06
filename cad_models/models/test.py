@@ -25,7 +25,7 @@ class Test(Model):
         # parameters
         lip_thickness = 2.0 * MM
         rpi_power_cable_diameter = 4.1 * MM
-        rpi_power_cable_slot_width = 3.6 * MM
+        rpi_power_cable_slot_width = 3.8 * MM
         rpi_power_cable_slot_corner_radius = 0.75 * MM
         rpi_dimensions = Vector(71 * MM, 35 * MM, 101 * MM)
         rpi_magnet_dimensions = Vector(6.5 * MM, 3 * MM)
@@ -138,7 +138,7 @@ class Test(Model):
             mirror_plane = Plane(face).offset(-rpi_power_switch_dimensions.X / 2)
             mirror(solid, mirror_plane, mode=Mode.SUBTRACT)
             edge_length = lip_thickness / 2
-            rpi_power_switch_slot_fillet_edges = (
+            rpi_power_cable_slot_fillet_edges = (
                 builder.edges()
                 .filter_by(Axis.X)
                 .filter_by(filter_by_edge_length(edge_length))
@@ -148,7 +148,7 @@ class Test(Model):
             # fillet edges
             fillet(rpi_magnet_standoff_fillet_edges, rpi_magnet_standoff_corner_radius)
             fillet(
-                rpi_power_switch_slot_fillet_edges, rpi_power_cable_slot_corner_radius
+                rpi_power_cable_slot_fillet_edges, rpi_power_cable_slot_corner_radius
             )
         super().__init__(builder.part, **kwargs)
 

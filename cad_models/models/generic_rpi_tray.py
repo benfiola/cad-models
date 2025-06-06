@@ -50,7 +50,7 @@ class GenericRpiTray(Model):
         lip_thickness = 2.0 * MM
         rpi_power_cable_diameter = 4.1 * MM
         rpi_power_cable_slot_corner_radius = 0.75 * MM
-        rpi_power_cable_slot_width = 3.6 * MM
+        rpi_power_cable_slot_width = 3.8 * MM
         rpi_dimensions = Vector(71 * MM, 35 * MM, 101 * MM)
         rpi_magnet_dimensions = Vector(6.5 * MM, 3 * MM)
         rpi_magnet_offset = 0.25 * MM
