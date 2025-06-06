@@ -12,6 +12,7 @@ from build123d import (
     Plane,
     Pos,
     Rectangle,
+    RigidJoint,
     Vector,
     extrude,
     fillet,
@@ -51,11 +52,13 @@ class RpiSsdBracket(Model):
         dimensions = Vector(70 * MM, 100 * MM)
         magnet_arm_dimensions = Vector(10 * MM, 10 * MM)
         magnet_dimensions = Vector(6.5 * MM, 3 * MM)
-        nut = BracketNut()
+        with BuildPart(mode=Mode.PRIVATE):
+            nut = BracketNut()
         rpi_standoff_dimensions = Vector(8.5 * MM, 8.5 * MM, 5 * MM)
         rpi_standoff_offset = 5.5 * MM
         rpi_standoff_spacing = Vector(49 * MM, 58 * MM)
-        screw = BracketScrew()
+        with BuildPart(mode=Mode.PRIVATE):
+            screw = BracketScrew()
         ssd_hole_spacing = Vector(62.0 * MM, 77.0 * MM)
         ssd_hole_offset = 2.5 * MM
         thickness = 5 * MM
@@ -69,6 +72,11 @@ class RpiSsdBracket(Model):
             solid = extrude(amount=dimensions.Y)
             edges = solid.edges().filter_by(Axis.Z)
             fillet_edges.extend(edges)
+
+            # create ssd joint
+            face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0]
+            location = face.location_at(0.5, 0.5)
+            RigidJoint("ssd", joint_location=location)
 
             # create ssd bracket holes
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
@@ -86,12 +94,15 @@ class RpiSsdBracket(Model):
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
             with BuildSketch(face):
                 location = Location((0, -rpi_standoff_offset))
-                with Locations(location):
+                with Locations(location) as loc:
+                    joint_location = loc.locations[0]
+                    joint_location *= Pos(Z=rpi_standoff_dimensions.Z)
                     with GridLocations(
                         rpi_standoff_spacing.X, rpi_standoff_spacing.Y, 2, 2
                     ) as grid_locs:
                         Rectangle(rpi_standoff_dimensions.X, rpi_standoff_dimensions.Y)
             extrude(amount=rpi_standoff_dimensions.Z)
+            RigidJoint("rpi", joint_location=joint_location)
 
             # create raspberry pi standoff holes and slots
             faces = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-4:]
