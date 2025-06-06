@@ -48,14 +48,15 @@ class GenericRpiTray(Model):
         keystone_offset = 56 * MM
         keystone_spacing = 23 * MM
         lip_thickness = 2.0 * MM
-        rpi_power_cable_diameter = 4 * MM
+        rpi_power_cable_diameter = 4.1 * MM
+        rpi_power_cable_slot_corner_radius = 0.75 * MM
+        rpi_power_cable_slot_width = 3.6 * MM
         rpi_dimensions = Vector(71 * MM, 35 * MM, 101 * MM)
         rpi_magnet_dimensions = Vector(6.5 * MM, 3 * MM)
         rpi_magnet_offset = 0.25 * MM
         rpi_magnet_standoff_corner_radius = 2.0 * MM
-        rpi_magnet_standoff_dimensions = Vector(9.5 * MM, 10 * MM, 7 * MM)
+        rpi_magnet_standoff_dimensions = Vector(9.5 * MM, 10 * MM, 5 * MM)
         rpi_offset = 17 * MM
-        rpi_power_switch_slot_corner_radius = 0.75 * MM
         rpi_power_switch_dimensions = Vector(62.5 * MM, 19.6 * MM)
         rpi_power_switch_inset = 3.5
         rpi_power_switch_spacing = 5 * MM
@@ -134,6 +135,7 @@ class GenericRpiTray(Model):
             # create rpi mount joint
             face = rpi_mount.faces().sort_by(Axis.Z)[0]
             location = rpi_mount_location
+            location *= Pos(Z=-lip_thickness)
             RigidJoint(f"rpi", joint_location=location)
 
             # create power switch mount
@@ -162,15 +164,18 @@ class GenericRpiTray(Model):
                 with Locations(location):
                     Circle(rpi_power_cable_diameter / 2)
                 location = Location((0, -face.width / 2))
-                slot_width = rpi_power_cable_diameter / 2
                 slot_height = lip_thickness + rpi_power_cable_diameter / 2
                 with Locations(location):
-                    Rectangle(slot_width, slot_height, align=(Align.CENTER, Align.MIN))
+                    Rectangle(
+                        rpi_power_cable_slot_width,
+                        slot_height,
+                        align=(Align.CENTER, Align.MIN),
+                    )
             solid = extrude(amount=lip_thickness, mode=Mode.SUBTRACT)
             mirror_plane = Plane(face).offset(-rpi_power_switch_dimensions.X / 2)
             mirror(solid, mirror_plane, mode=Mode.SUBTRACT)
             edge_length = lip_thickness / 2
-            rpi_power_switch_slot_fillet_edges = (
+            rpi_power_cable_slot_fillet_edges = (
                 builder.edges()
                 .filter_by(Axis.X)
                 .filter_by(filter_by_edge_length(edge_length))
@@ -233,7 +238,7 @@ class GenericRpiTray(Model):
             # fillet edges
             fillet(rpi_magnet_standoff_fillet_edges, rpi_magnet_standoff_corner_radius)
             fillet(
-                rpi_power_switch_slot_fillet_edges, rpi_power_switch_slot_corner_radius
+                rpi_power_cable_slot_fillet_edges, rpi_power_cable_slot_corner_radius
             )
         super().__init__(builder.part, **kwargs)
 
