@@ -45,7 +45,7 @@ class GenericRpiTray(Model):
         hex_grid_radius = 3 * MM
         hex_grid_spacing = 0.5 * MM
         interface_holes = Vector(2, 2)
-        keystone_offset = 56 * MM
+        keystone_offset = Vector(56 * MM, 8.43 * MM)
         keystone_spacing = 23 * MM
         lip_thickness = 2.0 * MM
         rpi_power_cable_diameter = 4.1 * MM
@@ -60,7 +60,7 @@ class GenericRpiTray(Model):
         rpi_offset = 17 * MM
         rpi_power_switch_dimensions = Vector(62.5 * MM, 19.6 * MM)
         rpi_power_switch_inset = 3.5
-        rpi_power_switch_spacing = 5 * MM
+        rpi_power_switch_spacing = 27.4 * MM
         tray_thickness = 4.0 * MM
 
         with BuildPart() as builder:
@@ -217,9 +217,10 @@ class GenericRpiTray(Model):
 
                 # create keystone cutouts
                 location = Location((0, 0))
-                location *= Pos(X=-keystone_offset)
+                location *= Pos(X=-keystone_offset.X)
                 location *= Pos(X=lip_thickness)
                 location *= Pos(X=base_keystone.dimensions.Y / 2)
+                location *= Pos(Y=-keystone_offset.Y)
                 with Locations(location):
                     with GridLocations(keystone_spacing, 0, 2, 1) as grid_locs:
                         keystone_locations = grid_locs.locations
