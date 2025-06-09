@@ -41,10 +41,10 @@ class ThinkcentreBracket(Model):
             base_keystone = KeystoneReceiver()
         keystone_spacing = 25 * MM
         interface_holes = Vector(3, 2)
-        cable_diameter = 4.1 * MM
-        cable_slot_width = 3.8 * MM
-        cable_tray_dimensions = Vector(20 * MM, 10 * MM, 70 * MM)
-        power_supply_tray_dimensions = Vector(65 * MM, 6 * MM, 145 * MM)
+        cable_diameter = 4.3 * MM
+        cable_slot_width = 4.0 * MM
+        cable_tray_dimensions = Vector(32.5 * MM, 10 * MM, 145.5 * MM)
+        power_supply_tray_dimensions = Vector(65.5 * MM, 4 * MM, 145.5 * MM)
         tray_offset = 12.5 * MM
         tray_thickness = 2 * MM
 
