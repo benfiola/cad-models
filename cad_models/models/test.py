@@ -13,148 +13,109 @@ from build123d import (
     Rectangle,
     Vector,
     extrude,
-    fillet,
     mirror,
 )
 
-from cad_models.common import Model, filter_by_edge_length, main
+from cad_models.common import Model, main
 
 
 class Test(Model):
     def __init__(self, **kwargs):
         # parameters
-        lip_thickness = 2.0 * MM
-        rpi_power_cable_diameter = 4.1 * MM
-        rpi_power_cable_slot_width = 3.8 * MM
-        rpi_power_cable_slot_corner_radius = 0.75 * MM
-        rpi_dimensions = Vector(71 * MM, 35 * MM, 101 * MM)
-        rpi_magnet_dimensions = Vector(6.5 * MM, 3 * MM)
-        rpi_magnet_offset = 0.25 * MM
-        rpi_magnet_standoff_corner_radius = 2.0 * MM
-        rpi_magnet_standoff_dimensions = Vector(9.5 * MM, 10 * MM, 5 * MM)
-        rpi_mount_cutout_width = 60 * MM
-        rpi_power_switch_dimensions = Vector(62.5 * MM, 19.6 * MM)
-        rpi_power_switch_inset = 3.5
-        rpi_power_switch_spacing = 5 * MM
-        tray_thickness = 4.0 * MM
+        face_thickness = 4 * MM
+        cable_diameter = 4.3 * MM
+        cable_slot_width = 4.0 * MM
+        cable_tray_dimensions = Vector(32.5 * MM, 10 * MM, 145.5 * MM)
+        power_supply_tray_dimensions = Vector(65.5 * MM, 4 * MM, 145.5 * MM)
+        tray_thickness = 2 * MM
 
         with BuildPart() as builder:
-            # create tray
-            with BuildSketch(Plane.XZ):
-                width = (
-                    lip_thickness
-                    + rpi_magnet_standoff_dimensions.X
-                    + rpi_dimensions.X
-                    + rpi_magnet_standoff_dimensions.X
-                    + lip_thickness
+            # create tray bases
+            base_location = Plane.XY.location
+            with BuildSketch(base_location):
+                # power supply
+                width = tray_thickness + power_supply_tray_dimensions.X + tray_thickness
+                height = (
+                    tray_thickness + power_supply_tray_dimensions.Z + tray_thickness
                 )
-                depth = (
-                    lip_thickness
-                    + rpi_power_switch_dimensions.Y
-                    + rpi_power_switch_spacing
-                    + rpi_dimensions.Z
-                    + lip_thickness
-                )
-                thickness = tray_thickness + lip_thickness
-                Rectangle(width, thickness, align=(Align.CENTER, Align.MAX))
-            extrude(amount=depth)
+                Rectangle(width, height, align=Align.MIN)
 
-            # create rpi mount
-            face = builder.part.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
-            tray_face = face
-            with BuildSketch(face):
-                location = Location((0, face.width / 2))
-                location *= Pos(Y=-lip_thickness)
-                location *= Pos(Y=-rpi_dimensions.Z / 2)
-                with Locations(location) as locs:
-                    rpi_mount_local_location = locs.local_locations[0]
-                    rpi_mount_location = locs.locations[0]
-                    Rectangle(
-                        rpi_dimensions.X,
-                        rpi_dimensions.Z,
-                    )
-                location = Location((0, face.width / 2))
-                location *= Pos(Y=-lip_thickness / 2)
-                with Locations(location):
-                    Rectangle(rpi_mount_cutout_width, lip_thickness)
-            rpi_mount = extrude(amount=-lip_thickness, mode=Mode.SUBTRACT)
-
-            # create magnet standoffs
-            face = tray_face
-            with BuildSketch(face):
-                location = rpi_mount_local_location
-                location *= Pos(X=-rpi_dimensions.X / 2)
-                location *= Pos(X=-rpi_magnet_standoff_dimensions.X / 2)
-                with Locations(location):
-                    Rectangle(
-                        rpi_magnet_standoff_dimensions.X,
-                        rpi_magnet_standoff_dimensions.Y,
-                    )
-            solid = extrude(amount=rpi_magnet_standoff_dimensions.Z)
-            edges = solid.edges().filter_by(Axis.Z).group_by(Axis.X)
-            rpi_magnet_standoff_fillet_edges = edges[0]
-            face = rpi_mount.faces().sort_by(Axis.X)[0]
-            mirror_plane = Plane(face).offset(-rpi_dimensions.X / 2)
-            face = solid.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
-            solid = mirror(solid, mirror_plane)
-            edges = solid.edges().filter_by(Axis.Z).group_by(Axis.X)
-            rpi_magnet_standoff_fillet_edges.extend(edges[-1])
-            with BuildSketch(face):
                 location = Location((0, 0))
-                location *= Pos(X=rpi_magnet_offset)
+                location *= Pos(X=tray_thickness)
+                location *= Pos(X=power_supply_tray_dimensions.X)
+                location *= Pos(X=tray_thickness)
                 with Locations(location):
-                    Circle(rpi_magnet_dimensions.X / 2)
-            solid = extrude(amount=-rpi_magnet_dimensions.Y, mode=Mode.SUBTRACT)
-            mirror(solid, mirror_plane, mode=Mode.SUBTRACT)
+                    width = cable_tray_dimensions.X + tray_thickness
+                    height = tray_thickness + cable_tray_dimensions.Z + tray_thickness
+                    Rectangle(width, height, align=Align.MIN)
+            extrude(amount=-face_thickness)
 
-            # create power switch mount
-            height = lip_thickness + rpi_power_cable_diameter
-            face = tray_face
-            with BuildSketch(face):
-                location = Location((0, -face.width / 2))
-                location *= Pos(Y=lip_thickness)
-                location *= Pos(Y=rpi_power_switch_dimensions.Y / 2)
-                with Locations(location) as locs:
-                    width = rpi_power_switch_dimensions.X + lip_thickness
-                    length = rpi_power_switch_dimensions.Y + lip_thickness
-                    Rectangle(width, length)
-            solid = extrude(amount=height)
-            face = solid.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
-            depth = height + rpi_power_switch_inset
-            with BuildSketch(face):
-                Rectangle(rpi_power_switch_dimensions.X, rpi_power_switch_dimensions.Y)
-            solid = extrude(amount=-depth, mode=Mode.SUBTRACT)
-            face = solid.faces().filter_by(Axis.X).sort_by(Axis.X)[0]
-            with BuildSketch(face):
-                location = Location((0, -face.width / 2))
-                location *= Pos(Y=lip_thickness)
-                location *= Pos(Y=rpi_power_cable_diameter / 2)
+            # create power supply tray solid
+            with BuildSketch(base_location):
+                location = Location((0, 0))
                 with Locations(location):
-                    Circle(rpi_power_cable_diameter / 2)
-                location = Location((0, -face.width / 2))
-                slot_height = lip_thickness + rpi_power_cable_diameter / 2
-                with Locations(location):
-                    Rectangle(
-                        rpi_power_cable_slot_width,
-                        slot_height,
-                        align=(Align.CENTER, Align.MIN),
+                    width = (
+                        tray_thickness + power_supply_tray_dimensions.X + tray_thickness
                     )
-            solid = extrude(amount=lip_thickness, mode=Mode.SUBTRACT)
-            mirror_plane = Plane(face).offset(-rpi_power_switch_dimensions.X / 2)
-            mirror(solid, mirror_plane, mode=Mode.SUBTRACT)
-            edge_length = lip_thickness / 2
-            rpi_power_cable_slot_fillet_edges = (
-                builder.edges()
-                .filter_by(Axis.X)
-                .filter_by(filter_by_edge_length(edge_length))
-                .group_by(Axis.Z)
-            )[2]
+                    height = (
+                        tray_thickness + power_supply_tray_dimensions.Z + tray_thickness
+                    )
+                    Rectangle(width, height, align=Align.MIN)
+            solid = extrude(amount=power_supply_tray_dimensions.Y)
 
-            # fillet edges
-            fillet(rpi_magnet_standoff_fillet_edges, rpi_magnet_standoff_corner_radius)
-            fillet(
-                rpi_power_cable_slot_fillet_edges, rpi_power_cable_slot_corner_radius
+            # create power supply tray cutout
+            face = solid.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0]
+            with BuildSketch(face):
+                location = Location((-face.length / 2, -face.width / 2))
+                location *= Pos(X=tray_thickness)
+                location *= Pos(Y=tray_thickness)
+                with Locations(location) as locs:
+                    Rectangle(
+                        power_supply_tray_dimensions.X,
+                        power_supply_tray_dimensions.Z,
+                        align=(Align.MIN, Align.MIN),
+                    )
+            extrude(amount=-power_supply_tray_dimensions.Y, mode=Mode.SUBTRACT)
+
+            # create cable tray solid
+            with BuildSketch(base_location):
+                location = Location((0, 0))
+                location *= Pos(X=tray_thickness)
+                location *= Pos(X=power_supply_tray_dimensions.X)
+                location *= Pos(X=tray_thickness)
+                with Locations(location):
+                    width = cable_tray_dimensions.X + tray_thickness
+                    height = tray_thickness + cable_tray_dimensions.Z + tray_thickness
+                    Rectangle(width, height, align=Align.MIN)
+            solid = extrude(amount=cable_tray_dimensions.Y)
+
+            # create cable tray cutout
+            face = solid.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0]
+            with BuildSketch(face):
+                location = Location((-face.length / 2, -face.width / 2))
+                location *= Pos(Y=tray_thickness)
+                with Locations(location) as locs:
+                    Rectangle(
+                        cable_tray_dimensions.X,
+                        cable_tray_dimensions.Z,
+                        align=(Align.MIN, Align.MIN),
+                    )
+            extrude(amount=-cable_tray_dimensions.Y, mode=Mode.SUBTRACT)
+
+            # create cable tray cable slots
+            face = solid.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+            with BuildSketch(face):
+                Circle(cable_diameter / 2)
+                Rectangle(
+                    cable_slot_width,
+                    cable_tray_dimensions.Y,
+                    align=(Align.CENTER, Align.MIN),
+                )
+            solid = extrude(amount=-tray_thickness, mode=Mode.SUBTRACT)
+            mirror_plane = Plane(face).offset(
+                -((cable_tray_dimensions.Z / 2) + tray_thickness)
             )
+            mirror(solid, mirror_plane, mode=Mode.SUBTRACT)
         super().__init__(builder.part, **kwargs)
 
 
