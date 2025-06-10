@@ -25,7 +25,8 @@ class Test(Model):
         face_thickness = 4 * MM
         cable_diameter = 4.3 * MM
         cable_slot_width = 4.0 * MM
-        cable_tray_dimensions = Vector(32.5 * MM, 10 * MM, 145.5 * MM)
+        cable_tray_dimensions = Vector(32.5 * MM, 10 * MM, 120.5 * MM)
+        cable_tray_offset = 25.0 * MM
         power_supply_tray_dimensions = Vector(65.5 * MM, 4 * MM, 145.5 * MM)
         tray_thickness = 2 * MM
 
@@ -46,7 +47,12 @@ class Test(Model):
                 location *= Pos(X=tray_thickness)
                 with Locations(location):
                     width = cable_tray_dimensions.X + tray_thickness
-                    height = tray_thickness + cable_tray_dimensions.Z + tray_thickness
+                    height = (
+                        cable_tray_offset
+                        + tray_thickness
+                        + cable_tray_dimensions.Z
+                        + tray_thickness
+                    )
                     Rectangle(width, height, align=Align.MIN)
             extrude(amount=-face_thickness)
 
@@ -83,6 +89,7 @@ class Test(Model):
                 location *= Pos(X=tray_thickness)
                 location *= Pos(X=power_supply_tray_dimensions.X)
                 location *= Pos(X=tray_thickness)
+                location *= Pos(Y=cable_tray_offset)
                 with Locations(location):
                     width = cable_tray_dimensions.X + tray_thickness
                     height = tray_thickness + cable_tray_dimensions.Z + tray_thickness

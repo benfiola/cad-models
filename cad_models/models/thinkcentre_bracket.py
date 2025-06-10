@@ -43,9 +43,10 @@ class ThinkcentreBracket(Model):
         interface_holes = Vector(3, 2)
         cable_diameter = 4.3 * MM
         cable_slot_width = 4.0 * MM
-        cable_tray_dimensions = Vector(32.5 * MM, 10 * MM, 145.5 * MM)
+        cable_tray_dimensions = Vector(32.5 * MM, 10 * MM, 120.5 * MM)
+        cable_tray_offset = 37.5 * MM
         power_supply_tray_dimensions = Vector(65.5 * MM, 4 * MM, 145.5 * MM)
-        tray_offset = 12.5 * MM
+        power_supply_tray_offset = 12.5 * MM
         tray_thickness = 2 * MM
 
         with BuildPart() as builder:
@@ -92,20 +93,21 @@ class ThinkcentreBracket(Model):
                     # power supply
                     width = power_supply_tray_dimensions.X + tray_thickness
                     height = (
-                        tray_offset
+                        power_supply_tray_offset
                         + tray_thickness
                         + power_supply_tray_dimensions.Z
                         + tray_thickness
                     )
                     Rectangle(width, height, align=Align.MIN)
 
+                    # cable tray
                     location = Location((0, 0))
                     location *= Pos(X=power_supply_tray_dimensions.X)
                     location *= Pos(X=tray_thickness)
                     with Locations(location):
                         width = cable_tray_dimensions.X + tray_thickness
                         height = (
-                            tray_offset
+                            cable_tray_offset
                             + tray_thickness
                             + cable_tray_dimensions.Z
                             + tray_thickness
@@ -116,7 +118,7 @@ class ThinkcentreBracket(Model):
                 # create power supply tray solid
                 with BuildSketch(base_location):
                     location = Location((0, 0))
-                    location *= Pos(Y=tray_offset)
+                    location *= Pos(Y=power_supply_tray_offset)
                     with Locations(location):
                         width = power_supply_tray_dimensions.X + tray_thickness
                         height = (
@@ -145,7 +147,7 @@ class ThinkcentreBracket(Model):
                     location = Location((0, 0))
                     location *= Pos(X=power_supply_tray_dimensions.X)
                     location *= Pos(X=tray_thickness)
-                    location *= Pos(Y=tray_offset)
+                    location *= Pos(Y=cable_tray_offset)
                     with Locations(location):
                         width = cable_tray_dimensions.X + tray_thickness
                         height = (
@@ -185,4 +187,4 @@ class ThinkcentreBracket(Model):
 
 
 if __name__ == "__main__":
-    main(ThinkcentreBracket(keystone_receivers=False, power_supply_tray=True))
+    main(ThinkcentreBracket())

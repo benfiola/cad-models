@@ -25,7 +25,7 @@ from cad_models.data import data_file
 class KeystoneReceiver(Model):
     dimensions: Vector
 
-    def __init__(self, **kwargs):
+    def __init__(self, taper_fix_depth: float = 1.7 * MM, **kwargs):
         solid: Solid = cast(Solid, import_step(data_file("keystone-receiver.step")))
         solid = solid.rotate(Axis.X, 90)
 
@@ -37,13 +37,14 @@ class KeystoneReceiver(Model):
             bottom_faces = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[:3]
 
             # fix top of receiver to no longer taper to a point
-            amendment = Vector(14.9 * MM, 1.7 * MM, 3.08 * MM)
-            location = front_face.location_at(0.5, 1.0)
-            location.orientation = front_face.orientation
-            location *= Pos(Z=-6.150)
-            with BuildSketch(location):
-                Rectangle(amendment.X, amendment.Y, align=(Align.CENTER, Align.MIN))
-            extrude(amount=amendment.Z)
+            if taper_fix_depth != 0.0:
+                taper_fix = Vector(14.9 * MM, taper_fix_depth * MM, 3.08 * MM)
+                location = front_face.location_at(0.5, 1.0)
+                location.orientation = front_face.orientation
+                location *= Pos(Z=-6.150)
+                with BuildSketch(location):
+                    Rectangle(taper_fix.X, taper_fix.Y, align=(Align.CENTER, Align.MIN))
+                extrude(amount=taper_fix.Z)
 
             # create joint
             joint_location = Location(front_face.location_at(0.5, 0.5))
