@@ -25,9 +25,9 @@ class Test(Model):
         face_thickness = 4 * MM
         cable_diameter = 4.3 * MM
         cable_slot_width = 4.0 * MM
-        cable_tray_dimensions = Vector(32.5 * MM, 10 * MM, 120.5 * MM)
+        cable_tray_dimensions = Vector(31.5 * MM, 10 * MM, 119 * MM)
         cable_tray_offset = 25.0 * MM
-        power_supply_tray_dimensions = Vector(65.5 * MM, 4 * MM, 145.5 * MM)
+        power_supply_tray_dimensions = Vector(64 * MM, 4 * MM, 144 * MM)
         tray_thickness = 2 * MM
 
         with BuildPart() as builder:
