@@ -37,7 +37,7 @@ class KeystoneReceiver(Model):
             bottom_faces = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[:3]
 
             # fix top of receiver to no longer taper to a point
-            taper_fix = Vector(14.9 * MM, 0.75 * MM, 3.08 * MM)
+            taper_fix = Vector(14.9 * MM, 0.625 * MM, 3.08 * MM)
             location = front_face.location_at(0.5, 1.0)
             location.orientation = front_face.orientation
             location *= Pos(Z=-6.150)
