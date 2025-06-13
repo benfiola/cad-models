@@ -1,20 +1,14 @@
 from typing import cast
 
 from build123d import (
-    MM,
-    Align,
     Axis,
     BuildPart,
-    BuildSketch,
     Location,
-    Pos,
-    Rectangle,
     RigidJoint,
     Rot,
     Solid,
     Vector,
     add,
-    extrude,
     import_step,
 )
 
@@ -35,15 +29,6 @@ class KeystoneReceiver(Model):
             # find faces to calculate size + joint location
             front_face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
             bottom_faces = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[:3]
-
-            # fix top of receiver to no longer taper to a point
-            taper_fix = Vector(14.9 * MM, 0.625 * MM, 3.08 * MM)
-            location = front_face.location_at(0.5, 1.0)
-            location.orientation = front_face.orientation
-            location *= Pos(Z=-6.150)
-            with BuildSketch(location):
-                Rectangle(taper_fix.X, taper_fix.Y, align=(Align.CENTER, Align.MIN))
-            extrude(amount=taper_fix.Z)
 
             # create joint
             joint_location = Location(front_face.location_at(0.5, 0.5))
