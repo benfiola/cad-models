@@ -239,7 +239,7 @@ class ServerRackMountBracket(BasePartObject):
     def __init__(
         self,
         dimensions: VectorLike,
-        ribs: bool = True,
+        ribs: bool | tuple[bool, bool] = True,
         interface_holes: VectorLike | None = None,
         external: bool = False,
         flipped_joints: bool = False,
@@ -248,6 +248,8 @@ class ServerRackMountBracket(BasePartObject):
         dimensions = Vector(dimensions)
         if interface_holes is not None:
             interface_holes = Vector(interface_holes)
+        if isinstance(ribs, bool):
+            ribs = (ribs, ribs)
 
         corner_radius = 3 * MM
         ear_dimensions = Vector(16.25 * MM, 0, 0)
@@ -276,7 +278,6 @@ class ServerRackMountBracket(BasePartObject):
                 with BuildLine():
                     d = dimensions
                     ed = ear_dimensions
-                    ees = ear_extra_space
                     id = interior_dimensions
                     it = interface_thickness
                     t = thickness
@@ -350,7 +351,9 @@ class ServerRackMountBracket(BasePartObject):
 
             # create ribs
             rib_width = interior_dimensions.X - ear_extra_space
-            if rib_width > 0 and ribs:
+            if rib_width > 0 and (ribs[0] or ribs[1]):
+                mode_top = Mode.ADD if ribs[0] else Mode.PRIVATE
+                mode_bottom = Mode.ADD if ribs[1] else Mode.PRIVATE
                 face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[0]
                 edge = face.edges().filter_by(Axis.X).sort_by(Axis.Y)[-2]
                 location = Location(edge.position_at(1.0))
@@ -362,9 +365,9 @@ class ServerRackMountBracket(BasePartObject):
                         B=90,
                         align=(Align.MIN, Align.MIN),
                     )
-                rib = extrude(amount=-thickness)
+                rib = extrude(amount=-thickness, mode=mode_top)
                 mirror_plane = face.offset(-interior_dimensions.Y / 2)
-                mirror(rib, Plane(mirror_plane))
+                mirror(rib, Plane(mirror_plane), mode=mode_bottom)
 
             # fillet edges
             fillet(fillet_edges, corner_radius)

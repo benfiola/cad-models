@@ -45,16 +45,21 @@ class ThinkcentreBracket(Model):
         cable_slot_width = 3.85 * MM
         cable_tray_dimensions = Vector(31.5 * MM, 10 * MM, 119 * MM)
         cable_tray_offset = 37.5 * MM
-        power_supply_tray_dimensions = Vector(64 * MM, 4 * MM, 144 * MM)
+        power_supply_tray_dimensions = Vector(65.75 * MM, 4 * MM, 144 * MM)
         power_supply_tray_offset = 12.5 * MM
         tray_thickness = 2 * MM
 
         with BuildPart() as builder:
             # create bracket
+            if power_supply_tray:
+                ribs = (False, True)
+            else:
+                ribs = True
             bracket = ServerRackMountBracket(
                 dimensions=dimensions,
                 interface_holes=interface_holes,
                 flipped_joints=flipped_joints,
+                ribs=ribs,
             )
             builder.joints.update(bracket.joints)
 
