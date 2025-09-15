@@ -35,14 +35,13 @@ class WallPatchPanel(Model):
         # parameters
         corner_radius = 3 * MM
         ear_dimensions = Vector(20 * MM, 0, 5 * MM)
-        grid_count = Vector(3.0, 3.0)
-        grid_dimensions = Vector(60 * MM, 82 * MM)
+        grid_dimensions = Vector(78 * MM, 82 * MM)
         grid_label_font_depth = 0.5 * MM
         grid_label_font_size = 5 * MM
         grid_label_font_style = "black"
         grid_labels = [
             ["br1-1", "br1-2", "br2-1"],
-            ["br2-2", None, "lr-1"],
+            ["br2-2", None, None, "lr-1"],
             ["lr-2", "o-1", "o-2"],
         ]
         hole_dimensions = Vector(12 * MM, 6 * MM)
@@ -102,52 +101,68 @@ class WallPatchPanel(Model):
 
             # create keystone cutouts
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+            keystone_local_locations = []
+            keystone_locations = []
             with BuildSketch(face):
-                spacing = Vector(grid_dimensions)
-                spacing.X /= grid_count.X
-                spacing.Y /= grid_count.Y
-                with GridLocations(
-                    spacing.X, spacing.Y, int(grid_count.X), int(grid_count.Y)
-                ) as grid_locations:
+                # calculate row locs
+                num_rows = len(grid_labels)
+                spacing_y = (grid_dimensions.Y - base_keystone.dimensions.Y) / (
+                    num_rows - 1
+                )
+                with GridLocations(0, spacing_y, 1, num_rows) as grid_locs:
+                    row_locs = grid_locs.local_locations
+                    row_locs = sorted(row_locs, key=row_major(y_dir=(0, -1, 0)))
+
+                # use row locs, calculate col locs
+                for row, row_loc in zip(grid_labels, row_locs):
+                    num_cols = len(row)
+                    spacing_x = (grid_dimensions.X - base_keystone.dimensions.X) / (
+                        num_cols - 1
+                    )
+                    with Locations(row_loc):
+                        with GridLocations(spacing_x, 0, num_cols, 1) as grid_locs:
+                            col_local_locs = grid_locs.local_locations
+                            col_local_locs = sorted(col_local_locs, key=col_major())
+                            keystone_local_locations.append(col_local_locs)
+                            col_locs = grid_locs.locations
+                            col_locs = sorted(col_locs, key=col_major())
+                            keystone_locations.append(col_locs)
+
+                # place cutouts
+                with Locations(*keystone_local_locations):
                     Rectangle(base_keystone.dimensions.X, base_keystone.dimensions.Y)
-                    keystone_locations = grid_locations.locations
-                    keystone_local_locations = grid_locations.local_locations
             extrude(amount=-panel_dimensions.Z, mode=Mode.SUBTRACT)
 
             # attach keystones
-            locations = sorted(keystone_locations, key=row_major(y_dir=(0, 0, -1)))
-            for index, keystone_location in enumerate(locations):
-                joint_location = Location(keystone_location)
-                joint_location *= Rot(Z=180)
-                cutout_joint = RigidJoint(
-                    f"keystone-{index}", joint_location=joint_location
-                )
-                keystone = copy(base_keystone)
-                joint: RigidJoint = keystone.joints["keystone"]
-                cutout_joint.connect_to(joint)
-                add(keystone)
+            for row, row_locations in enumerate(keystone_locations):
+                for col, keystone_location in enumerate(row_locations):
+                    joint_location = Location(keystone_location)
+                    joint_location *= Rot(Z=180)
+                    cutout_joint = RigidJoint(
+                        f"keystone-{row}-{col}", joint_location=joint_location
+                    )
+                    keystone = copy(base_keystone)
+                    joint: RigidJoint = keystone.joints["keystone"]
+                    cutout_joint.connect_to(joint)
+                    add(keystone)
 
             # create keystone labels
             face = builder.part.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
             font_path = data_file(f"overpass-{grid_label_font_style}.ttf")
-            with BuildSketch(Plane(face, x_dir=(1, 0, 0))) as text_sketch:
-                locations = sorted(
-                    keystone_local_locations, key=row_major(y_dir=(0, -1, 0))
-                )
-                for index, keystone_location in enumerate(locations):
-                    x = int(index / grid_count.Y)
-                    y = index % int(grid_count.Y)
-                    label = grid_labels[y][x]
-                    if not label:
-                        continue
-                    location = Location(keystone_location.position)
-                    location *= Pos(Y=base_keystone.dimensions.Y / 2)
-                    with Locations(location):
-                        Text(
-                            label,
-                            font_path=f"{font_path}",
-                            font_size=grid_label_font_size,
-                        )
+            with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
+                for row, row_locations in enumerate(keystone_local_locations):
+                    for col, keystone_location in enumerate(row_locations):
+                        label = grid_labels[row][col]
+                        if not label:
+                            continue
+                        location = Location(keystone_location.position)
+                        location *= Pos(Y=base_keystone.dimensions.Y / 2)
+                        with Locations(location):
+                            Text(
+                                label,
+                                font_path=f"{font_path}",
+                                font_size=grid_label_font_size,
+                            )
             extrude(amount=-grid_label_font_depth, mode=Mode.SUBTRACT)
 
             # fillet corners
