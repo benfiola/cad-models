@@ -50,7 +50,7 @@
         "[python]": {
           "editor.defaultFormatter": "ms-python.black-formatter"
         },
-        "OcpCadViewer.view.dark": true,
+        "OcpCadViewer.advanced.autostartTriggers": ["from build123d import *"],
         "OcpCadViewer.view.reset_camera": "KEEP"
       }
     }

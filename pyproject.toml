@@ -3,9 +3,7 @@ name="cad-models"
 version="0.0.0"
 dependencies=[
     "bd_warehouse==0.2.0",
-    "build123d==0.10.0",
-    "cadquery-ocp",
-    "click",
+    "build123d @ git+https://github.com/gumyr/build123d@11a017ead7508b7031b4acb75f026776586702ac",
     "ocp_tessellate",
     "ocp_vscode",
 ]
