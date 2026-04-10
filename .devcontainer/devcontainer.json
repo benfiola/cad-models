@@ -1,25 +1,36 @@
 {
+  "build": { "dockerfile": "Dockerfile" },
   "customizations": {
     "vscode": {
       "extensions": [
+        "anthropic.claude-code",
         "bernhard-42.ocp-cad-viewer",
         "esbenp.prettier-vscode",
         "ms-python.black-formatter",
         "ms-python.isort",
         "ms-python.python",
-        "ms-toolsai.jupyter",
         "rohit-gohri.format-code-action"
       ],
       "settings": {
         "launch": {
           "configurations": [
             {
-              "name": "python: current file",
+              "name": "ocp: ${file}",
               "type": "debugpy",
               "request": "launch",
               "cwd": "${workspaceFolder}",
               "program": "${file}",
-              "justMyCode": false
+              "justMyCode": false,
+              "args": ["--ocp"]
+            },
+            {
+              "name": "ocp: ${file}",
+              "type": "debugpy",
+              "request": "launch",
+              "cwd": "${workspaceFolder}",
+              "program": "${file}",
+              "justMyCode": false,
+              "args": ["--export", "test.step"]
             }
           ]
         },
@@ -31,25 +42,19 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "isort.args": ["--profile", "black"],
         "python.analysis.autoImportCompletions": true,
-        "python.analysis.packageIndexDepths": [
-          {
-            "name": "bd_warehouse",
-            "depth": 2,
-            "includeAllSymbols": true
-          }
-        ],
         "python.defaultInterpreterPath": "/python/bin/python",
+        "python.analysis.diagnosticSeverityOverrides": {
+          "reportWildcardImportFromLibrary": "none"
+        },
         "python.analysis.typeCheckingMode": "basic",
         "[python]": {
           "editor.defaultFormatter": "ms-python.black-formatter"
         },
-        "OcpCadViewer.advanced.watchCommands": "from ocp_vscode import show_all, get_port; show_all(locals(), port=get_port(), render_joints=True, _visual_debug=True)",
         "OcpCadViewer.view.dark": true,
         "OcpCadViewer.view.reset_camera": "KEEP"
       }
     }
   },
-  "image": "ubuntu:latest",
   "postCreateCommand": ".devcontainer/post-create.sh",
   "remoteEnv": {
     "PATH": "/python/bin:${containerEnv:PATH}",
