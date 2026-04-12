@@ -3,13 +3,16 @@ import copy
 import pathlib
 import sys
 from dataclasses import dataclass
+from typing import ClassVar
 
 from build123d import (
     Align,
     BasePartObject,
     BuildPart,
     Compound,
+    Location,
     Mode,
+    Rotation,
     RotationLike,
     Solid,
     export_step,
@@ -28,7 +31,8 @@ def set_label(build_part: BuildPart, label: str):
 
 
 class KeystoneReceiver(BasePartObject):
-    _base_solid: Solid | None = None
+    _base_solid: ClassVar[Solid | None] = None
+
     _applies_to = [BuildPart._tag]
 
     @classmethod
@@ -38,9 +42,29 @@ class KeystoneReceiver(BasePartObject):
             imported = import_step(step_file)
             if not isinstance(imported, Solid):
                 raise TypeError(imported)
+            imported.relocate(Location(imported.bounding_box().center()))
+            imported.move(Rotation(X=270))
             cls._base_solid = imported
         solid = copy.copy(cls._base_solid)
         return solid
+
+    @classmethod
+    def height(cls) -> float:
+        with BuildPart(mode=Mode.PRIVATE):
+            solid = cls.get_solid()
+        return solid.bounding_box().size.Y
+
+    @classmethod
+    def width(cls) -> float:
+        with BuildPart(mode=Mode.PRIVATE):
+            solid = cls.get_solid()
+        return solid.bounding_box().size.X
+
+    @classmethod
+    def depth(cls) -> float:
+        with BuildPart(mode=Mode.PRIVATE):
+            solid = cls.get_solid()
+        return solid.bounding_box().size.Z
 
     def __init__(
         self,
