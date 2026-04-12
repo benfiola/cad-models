@@ -12,16 +12,23 @@ from build123d import (
     Compound,
     Location,
     Mode,
-    Rotation,
+    Part,
+    Rot,
     RotationLike,
     Solid,
     export_step,
     import_step,
 )
 from build123d.topology.utils import tuplify
-from ocp_vscode.show import show_all
+from ocp_vscode.show import show_object
 
 from cad_models.data import get_data_file
+
+
+def get_part(build_part: BuildPart) -> Part:
+    if build_part.part is None:
+        raise ValueError("part is None")
+    return build_part.part
 
 
 def set_label(build_part: BuildPart, label: str):
@@ -32,7 +39,6 @@ def set_label(build_part: BuildPart, label: str):
 
 class KeystoneReceiver(BasePartObject):
     _base_solid: ClassVar[Solid | None] = None
-
     _applies_to = [BuildPart._tag]
 
     @classmethod
@@ -42,8 +48,9 @@ class KeystoneReceiver(BasePartObject):
             imported = import_step(step_file)
             if not isinstance(imported, Solid):
                 raise TypeError(imported)
-            imported.relocate(Location(imported.bounding_box().center()))
-            imported.move(Rotation(X=270))
+            center = Location(imported.bounding_box().center())
+            imported.relocate(center)
+            imported.location *= Rot(X=270)
             cls._base_solid = imported
         solid = copy.copy(cls._base_solid)
         return solid
@@ -80,6 +87,7 @@ class KeystoneReceiver(BasePartObject):
         super().__init__(
             part=solid, rotation=rotation, align=tuplify(align, 3), mode=mode
         )
+        print("here")
 
 
 @dataclass
@@ -88,30 +96,17 @@ class Args:
     ocp: bool = False
 
 
-def main(*build_parts: BuildPart):
+def main(compound: Compound):
     parser = argparse.ArgumentParser()
     parser.add_argument("--ocp", default=False, action="store_true")
     parser.add_argument("--export", default=None, type=pathlib.Path)
     args = Args(**vars(parser.parse_args(sys.argv[1:])))
 
     if args.ocp:
-        variables = {}
-        for build_part in build_parts:
-            if not build_part.part:
-                continue
-            variables[build_part.part.label] = build_part
-        show_all(variables=variables)
+        show_object(compound)
 
     if args.export:
-        shape = Compound(build_parts)
         if args.export.suffix == ".step":
-            export_step(shape, args.export)
-        else:
-            raise ValueError(f"unknown export extension: {args.export}")
-
-    if args.export:
-        shape = Compound(build_parts)
-        if args.export.suffix == ".step":
-            export_step(shape, args.export)
+            export_step(compound, args.export)
         else:
             raise ValueError(f"unknown export extension: {args.export}")
