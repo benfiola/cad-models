@@ -4,13 +4,19 @@ import typing
 from build123d import *
 from common import *
 
+# unused measurements
+wall_plate_depth = 8.3 * MM
+receiver_protrusion_depth = 18 * MM
+cable_slack = 49 * MM
+
+# parameters
 box_width = 150 * MM
 box_depth = 50 * MM
 box_height = 150 * MM
 cover_dovetail_depth = 3 * MM
 cover_fillet_radius = 1 * MM
-insert_height = 76.2 * MM
-insert_width = 44.45 * MM
+insert_height = 66 * MM
+insert_width = 33.44 * MM
 keystone_left_count = 4
 keystone_right_count = 4
 keystone_bottom_count = 1
@@ -18,7 +24,7 @@ keystone_top_count = 0
 keystone_spacing = 3 * MM
 screw_radius = 2.0 * MM
 screw_head_radius = 3.0 * MM
-screw_vertical_spacing = 96.8 * MM
+screw_vertical_spacing = 95 * MM
 wall_thickness_x = KeystoneReceiver.depth()
 wall_thickness_y = KeystoneReceiver.depth()
 wall_thickness_z = 5 * MM
