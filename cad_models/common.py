@@ -2,6 +2,7 @@ import copy
 from typing import ClassVar
 
 from build123d import (
+    MM,
     Align,
     Axis,
     BasePartObject,
@@ -13,7 +14,9 @@ from build123d import (
     RotationLike,
     Solid,
     import_step,
+    pack,
 )
+from ocp_vscode.show import show_object
 
 from cad_models.data import get_data_file
 
@@ -68,3 +71,9 @@ class KeystoneReceiver(BasePartObject):
         face = solid.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
         joint_location = Location(face.location_at(0.5, 0.5).position, (0, 0, 0))
         RigidJoint("joint", self, joint_location)
+
+
+def main(*build_parts: BuildPart):
+    parts = [ensure_part(bp.part) for bp in build_parts]
+    result = pack(parts, 5 * MM, align_z=True)
+    show_object(result)
