@@ -10,9 +10,9 @@ receiver_protrusion_depth = 18 * MM
 cable_slack = 49 * MM
 
 # parameters
-box_width = 150 * MM
-box_depth = 50 * MM
-box_height = 150 * MM
+box_width = 135 * MM
+box_depth = 35 * MM
+box_height = 165 * MM
 cover_dovetail_depth = 3 * MM
 cover_fillet_radius = 1 * MM
 insert_height = 66 * MM
@@ -23,7 +23,7 @@ keystone_bottom_count = 1
 keystone_top_count = 0
 keystone_spacing = 3 * MM
 screw_radius = 2.0 * MM
-screw_head_radius = 3.0 * MM
+screw_head_radius = 3.5 * MM
 screw_vertical_spacing = 95 * MM
 wall_thickness_x = KeystoneReceiver.depth()
 wall_thickness_y = KeystoneReceiver.depth()

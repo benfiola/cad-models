@@ -1,4 +1,7 @@
+import argparse
 import copy
+import pathlib
+from dataclasses import dataclass
 from typing import ClassVar
 
 from build123d import (
@@ -7,12 +10,15 @@ from build123d import (
     Axis,
     BasePartObject,
     BuildPart,
+    Compound,
     Location,
+    Mesher,
     Mode,
     Part,
     RigidJoint,
     RotationLike,
     Solid,
+    export_step,
     import_step,
     pack,
 )
@@ -73,7 +79,32 @@ class KeystoneReceiver(BasePartObject):
         RigidJoint("joint", self, joint_location)
 
 
+@dataclass
+class MainArgs:
+    export: pathlib.Path | None
+    ocp: bool
+
+
 def main(*build_parts: BuildPart):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--export", type=pathlib.Path, default=None)
+    parser.add_argument("--ocp", default=False, action="store_true")
+    args = MainArgs(**vars(parser.parse_args()))
+
     parts = [ensure_part(bp.part) for bp in build_parts]
-    result = pack(parts, 5 * MM, align_z=True)
-    show_object(result)
+    packed = pack(parts, 5 * MM, align_z=True)
+
+    if args.ocp:
+        show_object(packed)
+
+    if args.export:
+        extension = args.export.suffix
+        if extension == ".step":
+            compound = Compound(children=[*packed])
+            export_step(compound, args.export)
+        elif extension == ".3mf":
+            mesher = Mesher()
+            mesher.add_shape(packed)
+            mesher.write(args.export)
+        else:
+            raise ValueError(f"invalid export file extension: {extension}")

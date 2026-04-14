@@ -6,6 +6,7 @@ dependencies=[
     "build123d @ git+https://github.com/gumyr/build123d@11a017ead7508b7031b4acb75f026776586702ac",
     "ocp_tessellate",
     "ocp_vscode",
+    "xmltodict"
 ]
 
 [project.scripts]
