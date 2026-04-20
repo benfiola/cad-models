@@ -12,28 +12,6 @@
         "rohit-gohri.format-code-action"
       ],
       "settings": {
-        "launch": {
-          "configurations": [
-            {
-              "name": "ocp: ${file}",
-              "type": "debugpy",
-              "request": "launch",
-              "cwd": "${workspaceFolder}",
-              "program": "${file}",
-              "justMyCode": false,
-              "args": ["--ocp"]
-            },
-            {
-              "name": "ocp: ${file}",
-              "type": "debugpy",
-              "request": "launch",
-              "cwd": "${workspaceFolder}",
-              "program": "${file}",
-              "justMyCode": false,
-              "args": ["--export", "test.step"]
-            }
-          ]
-        },
         "editor.codeActionsOnSave": [
           "source.unusedImports",
           "source.organizeImports",

@@ -8,6 +8,24 @@
       "program": "${workspaceFolder}/cad_models/keystone_surface_mount.py",
       "justMyCode": false,
       "args": ["--ocp"]
+    },
+    {
+      "name": "keystone_patch_panel.py",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/keystone_patch_panel.py",
+      "justMyCode": false,
+      "args": ["--ocp"]
+    },
+    {
+      "name": "rack_mount.py",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/rack_mount.py",
+      "justMyCode": false,
+      "args": ["--ocp"]
     }
   ]
 }

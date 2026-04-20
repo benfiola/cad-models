@@ -4,27 +4,12 @@ import pathlib
 from dataclasses import dataclass
 from typing import ClassVar
 
-from build123d import (
-    MM,
-    Align,
-    Axis,
-    BasePartObject,
-    BuildPart,
-    Compound,
-    Location,
-    Mesher,
-    Mode,
-    Part,
-    RigidJoint,
-    RotationLike,
-    Solid,
-    export_step,
-    import_step,
-    pack,
-)
+from build123d import *
 from ocp_vscode.show import show_object
 
 from cad_models.data import get_data_file
+
+U = 1.75 * IN
 
 
 def ensure_part(part: Part | None) -> Part:
@@ -49,18 +34,15 @@ class KeystoneReceiver(BasePartObject):
 
     @classmethod
     def depth(cls) -> float:
-        with BuildPart(mode=Mode.PRIVATE):
-            return cls.get_solid().bounding_box().size.Y
+        return cls.get_solid().bounding_box().size.Y
 
     @classmethod
     def height(cls) -> float:
-        with BuildPart(mode=Mode.PRIVATE):
-            return cls.get_solid().bounding_box().size.Z
+        return cls.get_solid().bounding_box().size.Z
 
     @classmethod
     def width(cls) -> float:
-        with BuildPart(mode=Mode.PRIVATE):
-            return cls.get_solid().bounding_box().size.X
+        return cls.get_solid().bounding_box().size.X
 
     def __init__(
         self,
