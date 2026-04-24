@@ -10,11 +10,12 @@ class Parameters:
     bracket_depth = 64 * MM
     bracket_height = 1 * U
     bracket_thickness = 5 * MM
-    bracket_width = 37 * MM
+    bracket_width = 40 * MM
+    interior_height = 26 * MM
+    interior_width = 20 * MM
     ear_hole_width = 12 * MM
     ear_hole_height = 6 * MM
     ear_hole_horizontal_offset = 3 * MM
-    ear_width = 20 * MM
 
 
 p = Parameters()
@@ -37,5 +38,16 @@ with BuildPart() as builder:
             with GridLocations(0, vertical_spacing, 1, 2):
                 SlotOverall(p.ear_hole_width, p.ear_hole_height)
     extruded = extrude(amount=-p.bracket_thickness, mode=Mode.SUBTRACT)
+
+    # interior
+    face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[-1]
+    with BuildSketch(Plane(face.without_holes(), x_dir=(-1, 0, 0))):
+        width = p.interior_width + (p.bracket_thickness * 2)
+        height = p.interior_height + (p.bracket_thickness * 2)
+        location = Location((0, 0))
+        location *= Pos(X=-(p.bracket_width / 2))
+        with Locations(location):
+            Rectangle(width, height, align=(Align.MIN, Align.CENTER))
+    extrude(amount=p.bracket_depth - p.bracket_thickness)
 
 main(builder)
