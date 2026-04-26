@@ -19,11 +19,11 @@
       "args": ["--ocp"]
     },
     {
-      "name": "rb4011_bracket.py",
+      "name": "rack_mount.py",
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/cad_models/rb4011_bracket.py",
+      "program": "${workspaceFolder}/cad_models/rack_mount.py",
       "justMyCode": false,
       "args": ["--ocp"]
     }
