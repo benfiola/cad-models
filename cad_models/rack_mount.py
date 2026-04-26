@@ -27,7 +27,8 @@ class Parameters:
     ear_width = 15 * MM
     mount_width = 252 * MM
     mount_height = 1 * U
-    mount_oversize_offset = 20 * MM
+    mount_oversize_taper_offset = 10 * MM
+    mount_oversize_taper_length = 10 * MM
     mount_thickness = 5 * MM
     mount_lip = 2 * MM
     rack_width = 222 * MM
@@ -59,7 +60,7 @@ with BuildPart() as builder:
 
     # tray
     tray_width = p.device_width + (p.mount_thickness * 2)
-    oversize_offset = (tray_width - p.rack_width) + p.mount_thickness
+    tray_rack_width_difference = (tray_width - p.rack_width) + (p.mount_thickness * 2)
     tray_depth = p.device_depth + p.mount_thickness
     face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[-1]
     with BuildSketch(Plane(face.without_holes(), x_dir=(-1, 0, 0))):
@@ -72,31 +73,49 @@ with BuildPart() as builder:
         location *= Pos(Y=p.mount_height)
         with Locations(location):
             Rectangle(
-                oversize_offset / 2,
+                tray_rack_width_difference / 2,
                 p.mount_thickness,
                 align=(Align.MIN, Align.MAX),
             )
         mirror(about=Plane.YZ)
     extrude(amount=tray_depth)
-    
+
     # oversize tray subtraction
     face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
     mirror_plane = Plane(face.offset(-tray_width / 2))
     face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
-    edge = face.edges().filter_by(Axis.Y).sort_by(Axis.X)[3]
+    edge = face.edges().filter_by(Axis.Y).sort_by(Axis.X)[1]
     location = edge.location_at(1.0)
-    with BuildSketch(Plane(location.position, x_dir=(0, 1, 0), z_dir=face.normal_at())):
-        Triangle(
-            B=90,
-            a=p.mount_oversize_offset,
-            c=oversize_offset,
-            align=(Align.MIN, Align.MAX),
-        )
+    with BuildSketch(
+        Plane(location.position, x_dir=(0, -1, 0), z_dir=face.normal_at())
+    ) as sketch:
+        taper_width = (tray_rack_width_difference / 2) - p.mount_thickness
+        location = Location((0, 0))
+        with Locations(location):
+            Rectangle(
+                p.mount_oversize_taper_offset, taper_width, align=(Align.MAX, Align.MIN)
+            )
+        location = Location((0, 0))
+        location *= Pos(X=-p.mount_oversize_taper_offset)
+        with Locations(location):
+            Triangle(
+                C=90,
+                a=p.mount_oversize_taper_length,
+                b=taper_width,
+                align=(Align.MAX, Align.MIN),
+            )
+    sketch_face = sketch.face
     extruded = extrude(amount=-p.mount_height, mode=Mode.SUBTRACT)
     mirror(extruded, about=mirror_plane, mode=Mode.SUBTRACT)
-    
-    # ribs
+
+    # tray rib
     face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
-    with BuildSketcn(Plane)
+    with BuildSketch(Plane(face, x_dir=(0, -1, 0))):
+        location = Location((0, 0))
+        location *= Pos(Y=p.mount_height / 2)
+        location *= Pos(X=(tray_depth / 2))
+        with Locations(location) as locs:
+            testing = locs.locations[0]
     print("here")
+
 main(builder)
