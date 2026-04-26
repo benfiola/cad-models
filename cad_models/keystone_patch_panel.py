@@ -29,7 +29,7 @@ with BuildPart() as builder:
     # ears
     with BuildSketch(Plane.XZ) as sketch:
         location = Location((0, 0))
-        location *= Pos(X=(-p.panel_width + p.ear_width) / 2)
+        location *= Pos(X=-(inner_width + p.ear_width) / 2)
         with Locations(location):
             Rectangle(p.ear_width, p.panel_height)
             vertical_spacing = p.panel_height - (0.5 * IN)
