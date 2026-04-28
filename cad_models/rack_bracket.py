@@ -12,14 +12,18 @@ class ProfileCallback(typing.Protocol):
 @dataclass
 class Parameters:
     bracket_depth: float
-    bracket_width = 20 * MM
     profile: ProfileCallback
     bracket_height: float = 1 * U
+    center_width: float = 0 * U
     ear_hole_width: float = 12 * MM
     ear_hole_height: float = 6 * MM
     ear_thickness: float = 5 * MM
     ear_width: float = 15 * MM
-    interface_thickness: float = 5 * MM
+    interface_width: float = 5 * MM
+
+    @property
+    def bracket_width(self) -> float:
+        return self.ear_width + self.center_width + self.interface_width
 
 
 def gigaplus_profile(p: Parameters):
@@ -36,14 +40,13 @@ def gigaplus_profile(p: Parameters):
     with Locations(location):
         with GridLocations(hole_spacing, hole_spacing, hole_count, hole_count):
             CounterSinkHole(
-                screw_diameter / 2, screw_head_diameter / 2, p.interface_thickness
+                screw_diameter / 2, screw_head_diameter / 2, p.interface_width
             )
 
 
 gigaplus = Parameters(
     bracket_depth=50 * MM,
-    bracket_width=17 * MM,
-    interface_thickness=2 * MM,
+    interface_width=2 * MM,
     profile=gigaplus_profile,
 )
 
@@ -55,7 +58,7 @@ with BuildPart() as builder:
     # bracket
     with BuildSketch() as sketch:
         Rectangle(p.bracket_width, p.ear_thickness, align=(Align.MAX, Align.MIN))
-        Rectangle(p.interface_thickness, p.bracket_depth, align=(Align.MIN, Align.MIN))
+        Rectangle(p.interface_width, p.bracket_depth, align=(Align.MIN, Align.MIN))
     extrude(amount=p.bracket_height)
 
     # ear holes
