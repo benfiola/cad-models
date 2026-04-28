@@ -58,7 +58,7 @@ with BuildPart() as builder:
     # bracket
     with BuildSketch() as sketch:
         Rectangle(p.bracket_width, p.ear_thickness, align=(Align.MAX, Align.MIN))
-        Rectangle(p.interface_width, p.bracket_depth, align=(Align.MIN, Align.MIN))
+        Rectangle(p.interface_width, p.bracket_depth, align=(Align.MAX, Align.MIN))
     extrude(amount=p.bracket_height)
 
     # ear holes
