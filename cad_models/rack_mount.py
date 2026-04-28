@@ -72,6 +72,7 @@ with BuildPart() as builder:
     # tray rib via subtraction
     face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
     mirror_plane = Plane(face.offset(-tray_width / 2))
+    rib_thickness = p.mount_thickness
     with BuildSketch(Plane(face, x_dir=(0, -1, 0))):
         rib_width = tray_depth
         rib_height = p.mount_height - p.mount_thickness
@@ -86,7 +87,7 @@ with BuildPart() as builder:
                 align=(Align.MIN, Align.MIN),
                 rotation=180,
             )
-    extruded = extrude(amount=-p.mount_thickness, mode=Mode.SUBTRACT)
+    extruded = extrude(amount=-rib_thickness, mode=Mode.SUBTRACT)
     mirror(extruded, about=mirror_plane, mode=Mode.SUBTRACT)
 
     # device tray inset
