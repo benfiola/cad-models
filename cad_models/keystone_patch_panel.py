@@ -6,14 +6,14 @@ from common import *
 
 @dataclass
 class Parameters:
-    ear_hole_width = 12 * MM
-    ear_hole_height = 6 * MM
-    ear_thickness = 5 * MM
-    ear_width = 15 * MM
-    panel_width = 254 * MM
-    panel_height = 1 * U
-    panel_thickness = KeystoneReceiver.depth()
-    keystone_count = 8
+    ear_hole_width: float = 12 * MM
+    ear_hole_height: float = 6 * MM
+    ear_thickness: float = 5 * MM
+    ear_width: float = 15 * MM
+    panel_width: float = 254 * MM
+    panel_height: float = 1 * U
+    panel_thickness: float = KeystoneReceiver.depth()
+    keystone_count: int = 8
 
 
 p = Parameters()

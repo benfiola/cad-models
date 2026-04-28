@@ -19,20 +19,29 @@
       "args": ["--ocp"]
     },
     {
-      "name": "oversized_rack_mount.py",
+      "name": "oversided_rack_shelf.py",
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/cad_models/oversized_rack_mount.py",
+      "program": "${workspaceFolder}/cad_models/oversided_rack_shelf.py",
       "justMyCode": false,
       "args": ["--ocp"]
     },
     {
-      "name": "rack_mount.py",
+      "name": "rack_bracket.py",
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/cad_models/rack_mount.py",
+      "program": "${workspaceFolder}/cad_models/rack_bracket.py",
+      "justMyCode": false,
+      "args": ["--ocp"]
+    },
+    {
+      "name": "rack_shelf.py",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/rack_shelf.py",
       "justMyCode": false,
       "args": ["--ocp"]
     }

@@ -6,24 +6,24 @@ from common import *
 
 @dataclass
 class Parameters:
-    box_width = 150 * MM
-    box_depth = 50 * MM
-    box_height = 150 * MM
-    cover_dovetail_depth = 3 * MM
-    cover_fillet_radius = 1 * MM
-    insert_height = 70 * MM
-    insert_width = 50 * MM
+    box_width: float = 150 * MM
+    box_depth: float = 50 * MM
+    box_height: float = 150 * MM
+    cover_dovetail_depth: float = 3 * MM
+    cover_fillet_radius: float = 1 * MM
+    insert_height: float = 70 * MM
+    insert_width: float = 50 * MM
     keystone_left_count: int = 0
     keystone_right_count: int = 0
     keystone_bottom_count: int = 0
     keystone_top_count: int = 0
-    keystone_spacing = 3 * MM
-    screw_diameter = 2.25 * MM
-    screw_head_diameter = 3.75 * MM
-    screw_vertical_spacing = 83 * MM
-    wall_thickness_x = KeystoneReceiver.depth()
-    wall_thickness_y = KeystoneReceiver.depth()
-    wall_thickness_z = 5 * MM
+    keystone_spacing: float = 3 * MM
+    screw_diameter: float = 2.25 * MM
+    screw_head_diameter: float = 3.75 * MM
+    screw_vertical_spacing: float = 83 * MM
+    wall_thickness_x: float = KeystoneReceiver.depth()
+    wall_thickness_y: float = KeystoneReceiver.depth()
+    wall_thickness_z: float = 5 * MM
 
 
 interior_wall = Parameters(
