@@ -31,7 +31,7 @@ interior_wall = Parameters(
 )
 exterior_wall = Parameters(keystone_right_count=4)
 
-p = exterior_wall
+p = interior_wall
 
 with BuildPart() as cover_builder:
     # cover

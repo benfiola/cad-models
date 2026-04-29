@@ -1,6 +1,12 @@
+import typing
+
 from build123d import *
 
 from cad_models.common import *
+
+
+class TrayCallback(typing.Protocol):
+    def __call__(self, p: "Parameters") -> None: ...
 
 
 @dataclass
@@ -20,6 +26,7 @@ class Parameters:
     mount_thickness: float = 5 * MM
     mount_lip: float = 2 * MM
     rack_width: float = 222 * MM
+    tray: TrayCallback | None = None
 
 
 thinkcentre = Parameters(
@@ -31,7 +38,21 @@ thinkcentre = Parameters(
 )
 
 
-p = thinkcentre
+def hue_bridge_tray(p: Parameters):
+    pass
+
+
+hue_bridge = Parameters(
+    device_width=91.82 * MM,
+    device_height=26.9 * MM,
+    device_depth=89.42 * MM,
+    hex_count_x=11,
+    hex_count_y=9,
+    tray=hue_bridge_tray,
+)
+
+
+p = hue_bridge
 
 
 with BuildPart() as builder:
@@ -101,7 +122,7 @@ with BuildPart() as builder:
 
     # device tray inset hex grid
     face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
-    with BuildSketch(face):
+    with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
         spacing = p.hex_radius + (p.hex_spacing / 2)
         with HexLocations(
             spacing,
@@ -111,6 +132,11 @@ with BuildPart() as builder:
         ):
             RegularPolygon(p.hex_radius, 6, major_radius=False)
     extrude(amount=-p.mount_thickness, mode=Mode.SUBTRACT)
+
+    if p.tray:
+        face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
+        with Locations(face):
+            p.tray(p)
 
     # front panel cutout
     face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]

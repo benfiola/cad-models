@@ -27,7 +27,7 @@ with BuildPart() as builder:
     extrude(amount=p.panel_thickness)
 
     # ears
-    with BuildSketch(Plane.XZ) as sketch:
+    with BuildSketch(Plane.XZ):
         location = Location((0, 0))
         location *= Pos(X=-(inner_width + p.ear_width) / 2)
         with Locations(location):
@@ -41,7 +41,7 @@ with BuildPart() as builder:
     # keystone cutouts
     face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
     keystone_locations = []
-    with BuildSketch(Plane(face, x_dir=(1, 0, 0))) as sketch:
+    with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
         horizontal_spacing = KeystoneReceiver.width() + (
             max(0, inner_width - (KeystoneReceiver.width() * p.keystone_count))
             / p.keystone_count

@@ -39,7 +39,7 @@ def gigaplus_interface(p: Parameters):
     location *= Pos(X=-p.bracket_depth / 2)
     location *= Pos(X=hole_offset)
     location *= Pos(X=hole_spacing / 2)
-    with Locations(location) as locs:
+    with Locations(location):
         with GridLocations(hole_spacing, hole_spacing, hole_count, hole_count):
             CounterSinkHole(
                 screw_diameter / 2, screw_head_diameter / 2, p.interface_width
@@ -58,7 +58,7 @@ p = gigaplus
 
 with BuildPart() as builder:
     # bracket
-    with BuildSketch() as sketch:
+    with BuildSketch():
         Rectangle(p.bracket_width, p.ear_thickness, align=(Align.MAX, Align.MIN))
         Rectangle(p.interface_width, p.bracket_depth, align=(Align.MAX, Align.MIN))
     extrude(amount=p.bracket_height)
