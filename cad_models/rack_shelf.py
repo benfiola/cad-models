@@ -1,12 +1,8 @@
-import typing
+import math
 
 from build123d import *
 
 from cad_models.common import *
-
-
-class TrayCallback(typing.Protocol):
-    def __call__(self, p: "Parameters") -> None: ...
 
 
 @dataclass
@@ -14,8 +10,6 @@ class Parameters:
     device_height: float
     device_width: float
     device_depth: float
-    hex_count_x: int
-    hex_count_y: int
     ear_hole_width: float = 12 * MM
     ear_hole_height: float = 6 * MM
     ear_width: float = 15 * MM
@@ -26,29 +20,19 @@ class Parameters:
     mount_thickness: float = 5 * MM
     mount_lip: float = 2 * MM
     rack_width: float = 222 * MM
-    tray: TrayCallback | None = None
 
 
 thinkcentre = Parameters(
     device_width=179 * MM + 1.0 * MM,
     device_height=34.5 * MM,
     device_depth=183 * MM + 1.0 * MM,
-    hex_count_x=23,
-    hex_count_y=20,
 )
-
-
-def hue_bridge_tray(p: Parameters):
-    pass
 
 
 hue_bridge = Parameters(
     device_width=91.82 * MM,
     device_height=26.9 * MM,
     device_depth=89.42 * MM,
-    hex_count_x=11,
-    hex_count_y=9,
-    tray=hue_bridge_tray,
 )
 
 
@@ -124,19 +108,16 @@ with BuildPart() as builder:
     face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
     with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
         spacing = p.hex_radius + (p.hex_spacing / 2)
+        hex_count_x = int(p.device_width / (math.sqrt(3) * spacing))
+        hex_count_y = int(p.device_depth / (2 * spacing))
         with HexLocations(
             spacing,
-            p.hex_count_x,
-            p.hex_count_y,
+            hex_count_x,
+            hex_count_y,
             major_radius=False,
         ):
             RegularPolygon(p.hex_radius, 6, major_radius=False)
     extrude(amount=-p.mount_thickness, mode=Mode.SUBTRACT)
-
-    if p.tray:
-        face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
-        with Locations(face):
-            p.tray(p)
 
     # front panel cutout
     face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]

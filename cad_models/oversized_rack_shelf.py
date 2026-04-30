@@ -1,3 +1,5 @@
+import math
+
 from build123d import *
 
 from cad_models.common import *
@@ -8,8 +10,6 @@ class Parameters:
     device_height: float
     device_width: float
     device_depth: float
-    hex_count_x: int
-    hex_count_y: int
     ear_hole_width: float = 12 * MM
     ear_hole_height: float = 6 * MM
     ear_width: float = 15 * MM
@@ -28,8 +28,6 @@ rb4011 = Parameters(
     device_height=26 * MM,
     device_width=227.7 * MM + 1.0 * MM,
     device_depth=117.7 * MM + 1.0 * MM,
-    hex_count_x=28,
-    hex_count_y=13,
 )
 
 
@@ -144,10 +142,12 @@ with BuildPart() as builder:
     face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
     with BuildSketch(face):
         spacing = p.hex_radius + (p.hex_spacing / 2)
+        hex_count_x = int(p.device_width / (math.sqrt(3) * spacing))
+        hex_count_y = int(p.device_depth / (2 * spacing))
         with HexLocations(
             spacing,
-            p.hex_count_x,
-            p.hex_count_y,
+            hex_count_x,
+            hex_count_y,
             major_radius=False,
         ):
             RegularPolygon(p.hex_radius, 6, major_radius=False)
