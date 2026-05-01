@@ -1,5 +1,6 @@
 import argparse
 import copy
+import logging
 import pathlib
 import typing
 from dataclasses import dataclass
@@ -9,6 +10,10 @@ from build123d import *
 from ocp_vscode.show import show_object
 
 from cad_models.data import get_data_file
+
+logger = logging.getLogger("build123d")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())
 
 U = 1.75 * IN
 

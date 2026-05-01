@@ -6,7 +6,7 @@ from cad_models.common import *
 
 
 class InterfaceCallback(typing.Protocol):
-    def __call__(self, p: "Parameters") -> None: ...
+    def __call__(self, p: "Parameters") -> Part: ...
 
 
 @dataclass

@@ -5,11 +5,26 @@ from build123d import *
 from cad_models.common import *
 
 
+class Device:
+    height: float
+    width: float
+    depth: float
+
+    def build_part(self, part: Part) -> BuildPart:
+        builder = BuildPart()
+        builder.part = part
+        return builder
+
+    def tray(self, part: Part, p: "Parameters") -> Part:
+        raise NotImplementedError()
+
+    def panel(self, part: Part, p: "Parameters") -> Part:
+        raise NotImplementedError()
+
+
 @dataclass
 class Parameters:
-    device_height: float
-    device_width: float
-    device_depth: float
+    devices: list[Device]
     ear_hole_width: float = 12 * MM
     ear_hole_height: float = 6 * MM
     ear_width: float = 15 * MM
@@ -21,22 +36,52 @@ class Parameters:
     mount_lip: float = 2 * MM
     rack_width: float = 222 * MM
 
+    @property
+    def device_spacing(self):
+        return sum(d.width for d in self.devices) / len(self.devices) + 1
 
-thinkcentre = Parameters(
-    device_width=179 * MM + 1.0 * MM,
-    device_height=34.5 * MM,
-    device_depth=183 * MM + 1.0 * MM,
-)
+    @property
+    def tray_width(self):
+        return p.rack_width + (p.mount_thickness * 2)
 
-
-hue_bridge = Parameters(
-    device_width=91.82 * MM,
-    device_height=26.9 * MM,
-    device_depth=89.42 * MM,
-)
+    @property
+    def tray_depth(self):
+        return max(d.depth for d in self.devices) + self.mount_thickness
 
 
-p = hue_bridge
+class Thinkcentre(Device):
+    width = 179 * MM + 1.0 * MM
+    height = 34.5 * MM
+    depth = 183 * MM + 1.0 * MM
+
+    def tray(self, part: Part, p: Parameters) -> Part:
+        with self.build_part(part) as builder:
+            pass
+        return require(builder.part)
+
+    def panel(self, part: Part, p: Parameters) -> Part:
+        with self.build_part(part) as builder:
+            pass
+        return require(builder.part)
+
+
+class HueBridge(Device):
+    width = 91.82 * MM + 1.0 * MM
+    height = 26.9 * MM
+    depth = 89.42 * MM + 1.0 * MM
+
+    def tray(self, part: Part, p: Parameters) -> Part:
+        with self.build_part(part) as builder:
+            pass
+        return require(builder.part)
+
+    def panel(self, part: Part, p: Parameters) -> Part:
+        with self.build_part(part) as builder:
+            pass
+        return require(builder.part)
+
+
+p = Parameters(devices=[HueBridge()])
 
 
 with BuildPart() as builder:
@@ -60,29 +105,27 @@ with BuildPart() as builder:
     extrude(amount=-p.mount_thickness, mode=Mode.SUBTRACT)
 
     # tray
-    tray_width = p.rack_width + (p.mount_thickness * 2)
-    tray_depth = p.device_depth + p.mount_thickness
     face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[-1]
     with BuildSketch(Plane(face.without_holes(), x_dir=(-1, 0, 0))):
         location = Location((0, 0))
-        location *= Pos(X=-(tray_width) / 2)
+        location *= Pos(X=-(p.tray_width) / 2)
         location *= Pos(Y=-p.mount_height / 2)
         with Locations(location):
-            Rectangle(tray_width / 2, p.mount_thickness, align=(Align.MIN, Align.MIN))
+            Rectangle(p.tray_width / 2, p.mount_thickness, align=(Align.MIN, Align.MIN))
             Rectangle(p.mount_thickness, p.mount_height, align=(Align.MIN))
         mirror(about=Plane.YZ)
-    extrude(amount=tray_depth)
+    extrude(amount=p.tray_depth)
 
     # tray rib via subtraction
     face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
-    mirror_plane = Plane(face.offset(-tray_width / 2))
+    mirror_plane = Plane(face.offset(-p.tray_width / 2))
     rib_thickness = p.mount_thickness
     with BuildSketch(Plane(face, x_dir=(0, -1, 0))):
-        rib_width = tray_depth
+        rib_width = p.tray_depth
         rib_height = p.mount_height - p.mount_thickness
         location = Location((0, 0))
         location *= Pos(Y=p.mount_height / 2)
-        location *= Pos(X=tray_depth / 2)
+        location *= Pos(X=p.tray_depth / 2)
         with Locations(location):
             Triangle(
                 C=90,
@@ -98,7 +141,7 @@ with BuildPart() as builder:
     face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[3]
     with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
         location = Location((0, 0))
-        location *= Pos(Y=-tray_depth / 2)
+        location *= Pos(Y=-p.tray_depth / 2)
         with Locations(location):
             inset_height = p.device_depth
             Rectangle(p.device_width, inset_height, align=(Align.CENTER, Align.MIN))
