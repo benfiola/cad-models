@@ -76,7 +76,7 @@ with BuildPart() as box_builder:
 
     # cover slot
     face = box_builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
-    cover = copy.copy(ensure_part(cover_builder.part))
+    cover = copy.copy(require(cover_builder.part))
     joint_location = Location(face.location_at(0.5, 0.0).position, (0, 0, 0))
     joint = RigidJoint("cover", box_builder.part, joint_location)
     joint.connect_to(typing.cast(RigidJoint, cover.joints["joint"]))

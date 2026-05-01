@@ -1,6 +1,7 @@
 import argparse
 import copy
 import pathlib
+import typing
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -12,10 +13,13 @@ from cad_models.data import get_data_file
 U = 1.75 * IN
 
 
-def ensure_part(part: Part | None) -> Part:
-    if not part:
-        raise ValueError("part is None")
-    return part
+SomeObj = typing.TypeVar("SomeObj")
+
+
+def require(obj: SomeObj | None) -> SomeObj:
+    if not obj:
+        raise ValueError("obj is None")
+    return obj
 
 
 class KeystoneReceiver(BasePartObject):
@@ -73,7 +77,7 @@ def main(*build_parts: BuildPart):
     parser.add_argument("--ocp", default=False, action="store_true")
     args = MainArgs(**vars(parser.parse_args()))
 
-    parts = [ensure_part(bp.part) for bp in build_parts]
+    parts = [require(bp.part) for bp in build_parts]
     packed = pack(parts, 5 * MM, align_z=True)
 
     if args.ocp:
