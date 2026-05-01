@@ -15,10 +15,10 @@ class Device:
         builder.part = part
         return builder
 
-    def tray(self, part: Part, p: "Parameters") -> Part:
+    def tray(self, part: Part, plane: Plane, p: "Parameters") -> Part:
         raise NotImplementedError()
 
-    def panel(self, part: Part, p: "Parameters") -> Part:
+    def panel(self, part: Part, plane: Plane, p: "Parameters") -> Part:
         raise NotImplementedError()
 
 
@@ -54,13 +54,23 @@ class Thinkcentre(Device):
     height = 34.5 * MM
     depth = 183 * MM + 1.0 * MM
 
-    def tray(self, part: Part, p: Parameters) -> Part:
-        with self.build_part(part) as builder:
-            pass
+    def tray(self, part: Part, plane: Plane, p: Parameters) -> Part:
+        builder = BuildPart()
+        builder.part = part
+        with builder:
+            with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
+                location = Location((0, 0))
+                location *= Pos(Y=-p.tray_depth / 2)
+                with Locations(location):
+                    inset_height = self.depth
+                    Rectangle(self.width, inset_height, align=(Align.CENTER, Align.MIN))
+            extrude(amount=-p.mount_lip, mode=Mode.SUBTRACT)
         return require(builder.part)
 
-    def panel(self, part: Part, p: Parameters) -> Part:
-        with self.build_part(part) as builder:
+    def panel(self, part: Part, plane: Plane, p: Parameters) -> Part:
+        builder = BuildPart()
+        builder.part = part
+        with builder:
             pass
         return require(builder.part)
 
@@ -70,13 +80,25 @@ class HueBridge(Device):
     height = 26.9 * MM
     depth = 89.42 * MM + 1.0 * MM
 
-    def tray(self, part: Part, p: Parameters) -> Part:
-        with self.build_part(part) as builder:
-            pass
+    def tray(self, part: Part, plane: Plane, location: Location, p: Parameters) -> Part:
+        builder = BuildPart()
+        builder.part = part
+        with builder:
+            with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
+                location = Location((0, 0))
+                location *= Pos(Y=-p.tray_depth / 2)
+                with Locations(location):
+                    inset_height = self.depth
+                    Rectangle(self.width, inset_height, align=(Align.CENTER, Align.MIN))
+            extrude(amount=-p.mount_lip, mode=Mode.SUBTRACT)
         return require(builder.part)
 
-    def panel(self, part: Part, p: Parameters) -> Part:
-        with self.build_part(part) as builder:
+    def panel(
+        self, part: Part, plane: Plane, location: Location, p: Parameters
+    ) -> Part:
+        builder = BuildPart()
+        builder.part = part
+        with builder:
             pass
         return require(builder.part)
 
@@ -139,13 +161,13 @@ with BuildPart() as builder:
 
     # device tray inset
     face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[3]
-    with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
-        location = Location((0, 0))
-        location *= Pos(Y=-p.tray_depth / 2)
-        with Locations(location):
-            inset_height = p.device_depth
-            Rectangle(p.device_width, inset_height, align=(Align.CENTER, Align.MIN))
-    extrude(amount=-p.mount_lip, mode=Mode.SUBTRACT)
+    plane = Plane(face.without_holes(), x_dir=(1, 0, 0))
+    location = Location((0, 0))
+    for device in p.devices:
+        location *= Pos(X=p.device_spacing)
+        location *= Pos(X=device.width / 2)
+        builder.part = device.tray(require(builder.part), plane, p)
+        location *= Pos(X=device.width / 2)
 
     # device tray inset hex grid
     face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
