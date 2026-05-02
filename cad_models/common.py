@@ -1,8 +1,10 @@
 import argparse
 import copy
 import logging
+import math
 import pathlib
 import typing
+from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -99,3 +101,33 @@ def main(*build_parts: BuildPart):
             mesher.write(args.export)
         else:
             raise ValueError(f"invalid export file extension: {extension}")
+
+
+class FastHexGrid(BaseSketchObject):
+    _applies_to = [BuildSketch._tag]
+
+    def __init__(
+        self,
+        width: float,
+        height: float,
+        radius: float,
+        spacing: float,
+        rotation: float = 0,
+        align: Align | tuple[Align, Align] | None = None,
+        mode: Mode = Mode.ADD,
+    ):
+        actual_spacing = radius + (spacing / 2)
+        count_x = int(width / (math.sqrt(3) * actual_spacing))
+        count_y = int(height / (2 * actual_spacing))
+
+        with BuildSketch(mode=Mode.PRIVATE):
+            hex_locs = HexLocations(
+                actual_spacing, count_x, count_y, major_radius=False
+            )
+            blank_face = require(Rectangle(width, height).face())
+            hex_hole = RegularPolygon(radius, 6, major_radius=False).wire()
+            holes = typing.cast(Iterable[Wire], hex_locs * require(hex_hole))
+            wire = require(blank_face.outer_wire())
+            grid_pattern = Face(wire, holes)
+
+        super().__init__(grid_pattern, rotation=rotation, align=align)

@@ -1,5 +1,3 @@
-import math
-
 from build123d import *
 
 from cad_models.common import *
@@ -10,15 +8,7 @@ class Device:
     width: float
     depth: float
 
-    def build_part(self, part: Part) -> BuildPart:
-        builder = BuildPart()
-        builder.part = part
-        return builder
-
-    def tray(self, part: Part, plane: Plane, p: "Parameters") -> Part:
-        raise NotImplementedError()
-
-    def panel(self, part: Part, plane: Plane, p: "Parameters") -> Part:
+    def tray(self, p: "Parameters") -> Part:
         raise NotImplementedError()
 
 
@@ -49,32 +39,6 @@ class Parameters:
         return max(d.depth for d in self.devices) + self.mount_thickness
 
 
-class Thinkcentre(Device):
-    width = 179 * MM + 1.0 * MM
-    height = 34.5 * MM
-    depth = 183 * MM + 1.0 * MM
-
-    def tray(self, part: Part, plane: Plane, p: Parameters) -> Part:
-        builder = BuildPart()
-        builder.part = part
-        with builder:
-            with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
-                location = Location((0, 0))
-                location *= Pos(Y=-p.tray_depth / 2)
-                with Locations(location):
-                    inset_height = self.depth
-                    Rectangle(self.width, inset_height, align=(Align.CENTER, Align.MIN))
-            extrude(amount=-p.mount_lip, mode=Mode.SUBTRACT)
-        return require(builder.part)
-
-    def panel(self, part: Part, plane: Plane, p: Parameters) -> Part:
-        builder = BuildPart()
-        builder.part = part
-        with builder:
-            pass
-        return require(builder.part)
-
-
 class HueBridge(Device):
     width = 91.82 * MM + 1.0 * MM
     height = 26.9 * MM
@@ -91,15 +55,6 @@ class HueBridge(Device):
                     inset_height = self.depth
                     Rectangle(self.width, inset_height, align=(Align.CENTER, Align.MIN))
             extrude(amount=-p.mount_lip, mode=Mode.SUBTRACT)
-        return require(builder.part)
-
-    def panel(
-        self, part: Part, plane: Plane, location: Location, p: Parameters
-    ) -> Part:
-        builder = BuildPart()
-        builder.part = part
-        with builder:
-            pass
         return require(builder.part)
 
 
@@ -161,38 +116,43 @@ with BuildPart() as builder:
 
     # device tray inset
     face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[3]
-    plane = Plane(face.without_holes(), x_dir=(1, 0, 0))
-    location = Location((0, 0))
-    for device in p.devices:
-        location *= Pos(X=p.device_spacing)
-        location *= Pos(X=device.width / 2)
-        builder.part = device.tray(require(builder.part), plane, p)
-        location *= Pos(X=device.width / 2)
+    with BuildSketch(face):
+        FastHexGrid(p.devices[0].width, p.devices[0].depth, p.hex_radius, p.hex_spacing)
+    extrude(amount=10)
 
-    # device tray inset hex grid
-    face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
-    with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
-        spacing = p.hex_radius + (p.hex_spacing / 2)
-        hex_count_x = int(p.device_width / (math.sqrt(3) * spacing))
-        hex_count_y = int(p.device_depth / (2 * spacing))
-        with HexLocations(
-            spacing,
-            hex_count_x,
-            hex_count_y,
-            major_radius=False,
-        ):
-            RegularPolygon(p.hex_radius, 6, major_radius=False)
-    extrude(amount=-p.mount_thickness, mode=Mode.SUBTRACT)
+    # face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[3]
+    # plane = Plane(face.without_holes(), x_dir=(1, 0, 0))
+    # location = Location((0, 0))
+    # for device in p.devices:
+    #     location *= Pos(X=p.device_spacing)
+    #     location *= Pos(X=device.width / 2)
+    #     builder.part = device.tray(require(builder.part), plane, p)
+    #     location *= Pos(X=device.width / 2)
 
-    # front panel cutout
-    face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
-    cutout_width = p.device_width
-    with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
-        location = Location((0, 0))
-        location *= Pos(Y=-p.mount_height / 2)
-        location *= Pos(Y=p.mount_thickness)
-        with Locations(location):
-            Rectangle(cutout_width, p.device_height, align=(Align.CENTER, Align.MIN))
-    extrude(amount=-p.mount_thickness, mode=Mode.SUBTRACT)
+    # # device tray inset hex grid
+    # face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[1]
+    # with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
+    #     spacing = p.hex_radius + (p.hex_spacing / 2)
+    #     hex_count_x = int(p.device_width / (math.sqrt(3) * spacing))
+    #     hex_count_y = int(p.device_depth / (2 * spacing))
+    #     with HexLocations(
+    #         spacing,
+    #         hex_count_x,
+    #         hex_count_y,
+    #         major_radius=False,
+    #     ):
+    #         RegularPolygon(p.hex_radius, 6, major_radius=False)
+    # extrude(amount=-p.mount_thickness, mode=Mode.SUBTRACT)
+
+    # # front panel cutout
+    # face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+    # cutout_width = p.device_width
+    # with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
+    #     location = Location((0, 0))
+    #     location *= Pos(Y=-p.mount_height / 2)
+    #     location *= Pos(Y=p.mount_thickness)
+    #     with Locations(location):
+    #         Rectangle(cutout_width, p.device_height, align=(Align.CENTER, Align.MIN))
+    # extrude(amount=-p.mount_thickness, mode=Mode.SUBTRACT)
 
 main(builder)
