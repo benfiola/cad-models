@@ -1,66 +1,79 @@
-import typing
-
 from build123d import *
+from build123d import Part
 
 from cad_models.common import *
+from cad_models.common import Part
 
 
-class InterfaceCallback(typing.Protocol):
-    def __call__(self, p: "Parameters") -> Part: ...
+class Device:
+    bracket_depth: float
+    interface_width: float
+
+    def interface(self) -> Part:
+        raise NotImplementedError()
 
 
 @dataclass
 class Parameters:
-    bracket_depth: float
+    device: Device
     bracket_height: float = 1 * U
     center_width: float = 0 * U
     ear_hole_width: float = 12 * MM
     ear_hole_height: float = 6 * MM
     ear_thickness: float = 5 * MM
     ear_width: float = 15 * MM
-    interface_exterior: InterfaceCallback | None = None
-    interface_interior: InterfaceCallback | None = None
-    interface_width: float = 5 * MM
 
     @property
     def bracket_width(self) -> float:
-        return self.ear_width + self.center_width + self.interface_width
+        return self.ear_width + self.center_width + self.device.interface_width
 
 
-def gigaplus_interface(p: Parameters):
+class Gigaplus(Device):
+    bracket_depth = 50 * MM
+    interface_width = 2 * MM
+
     hole_count = 2
     hole_offset = 18 * MM
     hole_spacing = 20 * MM
     screw_diameter = 3 * MM
-    screw_head_diameter = 5
+    screw_head_diameter = 5 * MM
 
-    location = Location((0, 0))
-    location *= Pos(X=-p.ear_thickness / 2)
-    location *= Pos(X=-p.bracket_depth / 2)
-    location *= Pos(X=hole_offset)
-    location *= Pos(X=hole_spacing / 2)
-    with Locations(location):
-        with GridLocations(hole_spacing, hole_spacing, hole_count, hole_count):
-            CounterSinkHole(
-                screw_diameter / 2, screw_head_diameter / 2, p.interface_width
-            )
+    def interface(self) -> Part:
+        with BuildPart(mode=Mode.PRIVATE) as builder:
+            location = Location((0, 0))
+            location *= Pos(X=-p.ear_thickness / 2)
+            location *= Pos(X=-self.bracket_depth / 2)
+            location *= Pos(X=self.hole_offset)
+            location *= Pos(X=self.hole_spacing / 2)
+            with Locations(location):
+                with GridLocations(
+                    self.hole_spacing,
+                    self.hole_spacing,
+                    self.hole_count,
+                    self.hole_count,
+                ):
+                    CounterSinkHole(
+                        self.screw_diameter / 2,
+                        self.screw_head_diameter / 2,
+                        self.interface_width,
+                        mode=Mode.ADD,
+                    )
+        return require(builder.part)
 
 
-gigaplus = Parameters(
-    bracket_depth=50 * MM,
-    interface_width=2 * MM,
-    interface_exterior=gigaplus_interface,
-)
-
+gigaplus = Parameters(device=Gigaplus())
 
 p = gigaplus
-
 
 with BuildPart() as builder:
     # bracket
     with BuildSketch():
         Rectangle(p.bracket_width, p.ear_thickness, align=(Align.MAX, Align.MIN))
-        Rectangle(p.interface_width, p.bracket_depth, align=(Align.MAX, Align.MIN))
+        Rectangle(
+            p.device.interface_width,
+            p.device.bracket_depth,
+            align=(Align.MAX, Align.MIN),
+        )
     extrude(amount=p.bracket_height)
 
     # ear holes
@@ -76,13 +89,9 @@ with BuildPart() as builder:
     extrude(amount=-p.ear_thickness, mode=Mode.SUBTRACT)
 
     # bracket-device interface
-    if p.interface_interior:
-        face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[-1]
-        with Locations(Plane(face, x_dir=(0, 1, 0))):
-            p.interface_interior(p)
-    if p.interface_exterior:
-        face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
-        with Locations(Plane(face, x_dir=(0, 1, 0))):
-            p.interface_exterior(p)
+    face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
+    with Locations(Plane(face, x_dir=(0, 1, 0))):
+        interface = p.device.interface()
+        add(interface, mode=Mode.SUBTRACT)
 
 main(builder)
