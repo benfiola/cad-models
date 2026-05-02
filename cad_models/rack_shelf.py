@@ -8,10 +8,10 @@ class Device:
     width: float
     depth: float
 
-    def tray(self, p: "Parameters") -> Part:
+    def tray(self) -> Part:
         raise NotImplementedError()
 
-    def panel(self, p: "Parameters") -> Sketch:
+    def panel(self) -> Sketch:
         raise NotImplementedError()
 
 
@@ -31,17 +31,82 @@ class Parameters:
 
     @property
     def device_spacing(self):
-        return (p.rack_width - sum(d.width for d in self.devices)) / (
+        return (p.tray_inner_width - sum(d.width for d in self.devices)) / (
             len(self.devices) + 1
         )
 
     @property
+    def tray_inner_width(self):
+        return p.rack_width - (p.mount_thickness * 2)
+
+    @property
     def tray_width(self):
-        return p.rack_width + (p.mount_thickness * 2)
+        return p.rack_width
 
     @property
     def tray_depth(self):
         return max(d.depth for d in self.devices) + self.mount_thickness
+
+
+class Thinkcentre(Device):
+    width = 179 * MM + 1.0 * MM
+    height = 34.5 * MM
+    depth = 183 * MM + 1.0 * MM
+
+    @property
+    def outer_width(self):
+        return self.width + (p.mount_thickness * 2)
+
+    @property
+    def outer_depth(self):
+        return self.depth + (p.mount_thickness * 2)
+
+    @property
+    def outer_height(self):
+        return self.height + p.mount_thickness
+
+    @property
+    def panel_opening_height(self):
+        return self.height - p.mount_lip
+
+    @property
+    def panel_opening_width(self):
+        return self.width - (p.mount_lip * 2)
+
+    def tray(self) -> Part:
+        with BuildPart(mode=Mode.PRIVATE) as builder:
+            # outer tray
+            with BuildSketch():
+                Rectangle(self.outer_width, self.outer_depth)
+            extrude(amount=p.mount_thickness)
+
+            # inner tray
+            face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
+            with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
+                Rectangle(self.width, self.depth)
+            extrude(amount=-p.mount_lip, mode=Mode.SUBTRACT)
+
+            # hex grid
+            face = builder.faces().sort_by(Axis.Z).filter_by(Axis.Z)[1]
+            with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
+                add(hex_grid(self.width, self.depth, p.hex_radius, p.hex_spacing))
+            extrude(amount=-p.mount_thickness, mode=Mode.SUBTRACT)
+
+            # joint
+            face = builder.faces().sort_by(Axis.Z).filter_by(Axis.Z)[0]
+            edge = face.edges().filter_by(Axis.X).sort_by(Axis.Y)[0]
+            location = Location(edge.position_at(0.5))
+            RigidJoint("tray", joint_location=location)
+        return require(builder.part)
+
+    def panel(self) -> Sketch:
+        with BuildSketch(mode=Mode.PRIVATE) as sketch:
+            Rectangle(
+                self.panel_opening_width,
+                self.panel_opening_height,
+                align=(Align.CENTER, Align.MIN),
+            )
+        return sketch.sketch
 
 
 class HueBridge(Device):
@@ -82,7 +147,15 @@ class HueBridge(Device):
     def grid_height(self):
         return self.depth - (self.inner_fillet_radius / 2)
 
-    def tray(self, p: Parameters) -> Part:
+    @property
+    def panel_opening_width(self):
+        return self.wall_opening
+
+    @property
+    def panel_opening_height(self):
+        return self.height - p.mount_lip
+
+    def tray(self) -> Part:
         with BuildPart(mode=Mode.PRIVATE) as builder:
             # outer tray
             with BuildSketch() as sketch:
@@ -99,7 +172,7 @@ class HueBridge(Device):
 
             # wall openings
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
-            with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))) as sketch:
+            with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
                 Rectangle(self.outer_width, self.wall_opening)
                 Rectangle(self.wall_opening, self.outer_depth)
             extrude(amount=-self.height, mode=Mode.SUBTRACT)
@@ -121,9 +194,9 @@ class HueBridge(Device):
             RigidJoint("tray", joint_location=location)
         return require(builder.part)
 
-    def panel(self, p: Parameters) -> Sketch:
+    def panel(self) -> Sketch:
         with BuildSketch(mode=Mode.PRIVATE) as sketch:
-            Rectangle(self.wall_opening, self.height)
+            Rectangle(self.wall_opening, self.height, align=(Align.CENTER, Align.MIN))
         return sketch.sketch
 
 
@@ -132,12 +205,14 @@ def get_tray_cutout(part: Part) -> Face:
     return Face(face.outer_wire())
 
 
-p = Parameters(devices=[HueBridge(), HueBridge()])
+hue_bridge = Parameters(devices=[HueBridge()])
+
+thinkcentre = Parameters(devices=[Thinkcentre()])
+
+p = thinkcentre
 
 
 with BuildPart() as builder:
-    inner_width = p.mount_width - (p.ear_width * 2)
-
     # front panel
     with BuildSketch(Plane.XZ):
         Rectangle(p.mount_width, p.mount_height)
@@ -147,7 +222,7 @@ with BuildPart() as builder:
     face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
     with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
         location = Location((0, 0))
-        location *= Pos(X=-(inner_width + p.ear_width) / 2)
+        location *= Pos(X=-(p.tray_width + p.ear_width) / 2)
         with Locations(location):
             vertical_spacing = p.mount_height - (0.5 * IN)
             with GridLocations(0, vertical_spacing, 1, 2):
@@ -196,7 +271,7 @@ with BuildPart() as builder:
     for index, device in enumerate(p.devices):
         location *= Pos(X=p.device_spacing)
         location *= Pos(X=device.width / 2)
-        part = device.tray(p)
+        part = device.tray()
         part_joint = typing.cast(RigidJoint, part.joints["tray"])
         tray_joint = RigidJoint(f"device-{index}", joint_location=location)
         tray_joint.connect_to(part_joint)
@@ -207,17 +282,15 @@ with BuildPart() as builder:
     # front panel cutout
     face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
     location = Location(face.position_at(0.5, 1.0))
-    location *= Pos(X=-p.tray_width / 2)
-    location *= Pos(X=p.mount_thickness)
+    location *= Pos(X=-p.tray_inner_width / 2)
     location *= Pos(Z=p.mount_thickness)
     for device in p.devices:
         location *= Pos(X=p.device_spacing)
         location *= Pos(X=device.width / 2)
-        device_location = Location(location)
-        device_location *= Pos(Z=device.height / 2)
-        with BuildSketch(face.without_holes()):
-            with Locations(device_location):
-                add(device.panel(p))
+        plane = Plane(location.position, x_dir=(1, 0, 0), z_dir=face.normal_at())
+        with BuildSketch(plane):
+            cutout = device.panel()
+            add(cutout)
         extrude(amount=-p.mount_thickness, mode=Mode.SUBTRACT)
         location *= Pos(X=device.width / 2)
 
