@@ -19,11 +19,11 @@
       "args": ["--ocp"]
     },
     {
-      "name": "oversided_rack_shelf.py",
+      "name": "oversized_rack_shelf.py",
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/cad_models/oversided_rack_shelf.py",
+      "program": "${workspaceFolder}/cad_models/oversized_rack_shelf.py",
       "justMyCode": false,
       "args": ["--ocp"]
     },
