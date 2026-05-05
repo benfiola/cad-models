@@ -45,7 +45,7 @@ class Parameters:
 
     @property
     def tray_depth(self):
-        return self.device.depth + self.mount_thickness + self.oversize_taper_offset
+        return self.device.depth + self.mount_thickness
 
     @property
     def taper_width(self):
@@ -212,7 +212,8 @@ with BuildPart() as builder:
 
     # oversize tray cutouts
     face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
-    mirror_plane = Plane(face.offset(p.tray_width / 2))
+    mirror_plane = Plane(face.offset(-p.tray_width / 2))
+    test = Plane(face.offset(-p.tray_width))
     face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
     edge = face.edges().filter_by(Axis.Y).sort_by(Axis.X)[1]
     location = edge.location_at(1.0)
