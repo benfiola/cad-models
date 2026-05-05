@@ -58,7 +58,7 @@ class RB4011(Device):
     depth = 117.7 * MM + 1.0 * MM
 
     foot_diameter = 15 * MM
-    foot_depth = 3.5 * MM
+    foot_depth = 3.7 * MM
     foot_spacing_x = 162.2 * MM
     foot_spacing_y = 65.34 * MM
     foot_offset_y = -7.9 * MM
