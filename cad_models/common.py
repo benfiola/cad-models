@@ -71,19 +71,54 @@ class KeystoneReceiver(BasePartObject):
         RigidJoint("joint", self, joint_location)
 
 
+def hex_grid(width: float, height: float, radius: float, spacing: float) -> Sketch:
+    with BuildSketch(mode=Mode.PRIVATE) as builder:
+        actual_spacing = radius + (spacing / 2)
+        count_x = int((width - radius) / (math.sqrt(3) * actual_spacing))
+        count_y = int((height - radius) / (2 * actual_spacing))
+        with HexLocations(actual_spacing, count_x, count_y, major_radius=False):
+            RegularPolygon(radius, 6, major_radius=False)
+    return builder.sketch
+
+
 @dataclass
 class MainArgs:
     export: pathlib.Path | None
     ocp: bool
+    variant: str
 
 
-def main(*build_parts: BuildPart):
+TParameter = typing.TypeVar("TParameter", contravariant=True)
+
+
+class BuildPartFn(typing.Protocol, typing.Generic[TParameter]):
+    def __call__(self, p: TParameter) -> BuildPart: ...
+
+
+def main(
+    build_part_fns: BuildPartFn[TParameter] | list[BuildPartFn[TParameter]],
+    variants: dict[str, TParameter] | TParameter,
+):
+    if not isinstance(build_part_fns, list):
+        build_part_fns = [build_part_fns]
+    if not isinstance(variants, dict):
+        variants = {"default": variants}
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--export", type=pathlib.Path, default=None)
     parser.add_argument("--ocp", default=False, action="store_true")
+    parser.add_argument("--variant", default="default", choices=variants.keys())
     args = MainArgs(**vars(parser.parse_args()))
 
-    parts = [require(bp.part) for bp in build_parts]
+    parameters = variants.get(args.variant)
+    if not parameters:
+        raise ValueError(f"invalid variant: {args.variant}")
+
+    parts = []
+    for build_part_fn in build_part_fns:
+        part = require(build_part_fn(parameters).part)
+        parts.append(part)
+
     packed = pack(parts, 5 * MM, align_z=True)
 
     if args.ocp:
@@ -100,13 +135,3 @@ def main(*build_parts: BuildPart):
             mesher.write(args.export)
         else:
             raise ValueError(f"invalid export file extension: {extension}")
-
-
-def hex_grid(width: float, height: float, radius: float, spacing: float) -> Sketch:
-    with BuildSketch(mode=Mode.PRIVATE) as builder:
-        actual_spacing = radius + (spacing / 2)
-        count_x = int((width - radius) / (math.sqrt(3) * actual_spacing))
-        count_y = int((height - radius) / (2 * actual_spacing))
-        with HexLocations(actual_spacing, count_x, count_y, major_radius=False):
-            RegularPolygon(radius, 6, major_radius=False)
-    return builder.sketch

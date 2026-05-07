@@ -6,6 +6,7 @@ from cad_models.common import Part
 
 
 class Device:
+    p: "Parameters"
     bracket_depth: float
     interface_width: float
 
@@ -22,6 +23,9 @@ class Parameters:
     ear_hole_height: float = 6 * MM
     ear_thickness: float = 5 * MM
     ear_width: float = 15 * MM
+
+    def __post_init__(self):
+        self.device.p = self
 
     @property
     def bracket_width(self) -> float:
@@ -41,7 +45,7 @@ class Gigaplus(Device):
     def interface(self) -> Part:
         with BuildPart(mode=Mode.PRIVATE) as builder:
             location = Location((0, 0))
-            location *= Pos(X=-p.ear_thickness / 2)
+            location *= Pos(X=-self.p.ear_thickness / 2)
             location *= Pos(X=-self.bracket_depth / 2)
             location *= Pos(X=self.hole_offset)
             location *= Pos(X=self.hole_spacing / 2)
@@ -61,37 +65,36 @@ class Gigaplus(Device):
         return require(builder.part)
 
 
-gigaplus = Parameters(device=Gigaplus())
+def builder_fn(p: Parameters):
+    with BuildPart() as builder:
+        # bracket
+        with BuildSketch():
+            Rectangle(p.bracket_width, p.ear_thickness, align=(Align.MAX, Align.MIN))
+            Rectangle(
+                p.device.interface_width,
+                p.device.bracket_depth,
+                align=(Align.MAX, Align.MIN),
+            )
+        extrude(amount=p.bracket_height)
 
-p = gigaplus
+        # ear holes
+        face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+        with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
+            location = Location((0, 0))
+            location *= Pos(X=-p.bracket_width / 2)
+            location *= Pos(X=p.ear_width / 2)
+            with Locations(location):
+                vertical_spacing = p.bracket_height - (0.5 * IN)
+                with GridLocations(0, vertical_spacing, 1, 2):
+                    SlotOverall(p.ear_hole_width, p.ear_hole_height)
+        extrude(amount=-p.ear_thickness, mode=Mode.SUBTRACT)
 
-with BuildPart() as builder:
-    # bracket
-    with BuildSketch():
-        Rectangle(p.bracket_width, p.ear_thickness, align=(Align.MAX, Align.MIN))
-        Rectangle(
-            p.device.interface_width,
-            p.device.bracket_depth,
-            align=(Align.MAX, Align.MIN),
-        )
-    extrude(amount=p.bracket_height)
+        # bracket-device interface
+        face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
+        with Locations(Plane(face, x_dir=(0, 1, 0))):
+            interface = p.device.interface()
+            add(interface, mode=Mode.SUBTRACT)
+    return builder
 
-    # ear holes
-    face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
-    with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
-        location = Location((0, 0))
-        location *= Pos(X=-p.bracket_width / 2)
-        location *= Pos(X=p.ear_width / 2)
-        with Locations(location):
-            vertical_spacing = p.bracket_height - (0.5 * IN)
-            with GridLocations(0, vertical_spacing, 1, 2):
-                SlotOverall(p.ear_hole_width, p.ear_hole_height)
-    extrude(amount=-p.ear_thickness, mode=Mode.SUBTRACT)
 
-    # bracket-device interface
-    face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
-    with Locations(Plane(face, x_dir=(0, 1, 0))):
-        interface = p.device.interface()
-        add(interface, mode=Mode.SUBTRACT)
-
-main(builder)
+main(builder_fn, {"gigaplus": Parameters(device=Gigaplus())})

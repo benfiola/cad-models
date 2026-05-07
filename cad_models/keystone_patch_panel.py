@@ -15,51 +15,54 @@ class Parameters:
     panel_thickness: float = KeystoneReceiver.depth()
     keystone_count: int = 8
 
+    @property
+    def inner_width(self):
+        return self.panel_width - (self.ear_width * 2)
 
-p = Parameters()
 
-with BuildPart() as builder:
-    inner_width = p.panel_width - (p.ear_width * 2)
+def builder_fn(p: Parameters) -> BuildPart:
+    with BuildPart() as builder:
+        # panel
+        with BuildSketch(Plane.XZ):
+            Rectangle(p.inner_width, p.panel_height)
+        extrude(amount=p.panel_thickness)
 
-    # panel
-    with BuildSketch(Plane.XZ):
-        Rectangle(inner_width, p.panel_height)
-    extrude(amount=p.panel_thickness)
+        # ears
+        with BuildSketch(Plane.XZ):
+            location = Location((0, 0))
+            location *= Pos(X=-(p.inner_width + p.ear_width) / 2)
+            with Locations(location):
+                Rectangle(p.ear_width, p.panel_height)
+                vertical_spacing = p.panel_height - (0.5 * IN)
+                with GridLocations(0, vertical_spacing, 1, 2):
+                    SlotOverall(p.ear_hole_width, p.ear_hole_height, mode=Mode.SUBTRACT)
+            mirror(about=Plane.YZ)
+        extrude(amount=p.ear_thickness)
 
-    # ears
-    with BuildSketch(Plane.XZ):
-        location = Location((0, 0))
-        location *= Pos(X=-(inner_width + p.ear_width) / 2)
-        with Locations(location):
-            Rectangle(p.ear_width, p.panel_height)
-            vertical_spacing = p.panel_height - (0.5 * IN)
-            with GridLocations(0, vertical_spacing, 1, 2):
-                SlotOverall(p.ear_hole_width, p.ear_hole_height, mode=Mode.SUBTRACT)
-        mirror(about=Plane.YZ)
-    extrude(amount=p.ear_thickness)
+        # keystone cutouts
+        face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
+        keystone_locations = []
+        with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
+            horizontal_spacing = KeystoneReceiver.width() + (
+                max(0, p.inner_width - (KeystoneReceiver.width() * p.keystone_count))
+                / p.keystone_count
+            )
+            with GridLocations(horizontal_spacing, 0, p.keystone_count, 1) as grid_locs:
+                Rectangle(KeystoneReceiver.width(), KeystoneReceiver.height())
+                for location in grid_locs.locations:
+                    keystone_location = location * Rot(X=-90)
+                    keystone_locations.append(keystone_location)
+        extrude(amount=-p.panel_thickness, mode=Mode.SUBTRACT)
 
-    # keystone cutouts
-    face = builder.faces().filter_by(Axis.Y).sort_by(Axis.Y)[0]
-    keystone_locations = []
-    with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
-        horizontal_spacing = KeystoneReceiver.width() + (
-            max(0, inner_width - (KeystoneReceiver.width() * p.keystone_count))
-            / p.keystone_count
-        )
-        with GridLocations(horizontal_spacing, 0, p.keystone_count, 1) as grid_locs:
-            Rectangle(KeystoneReceiver.width(), KeystoneReceiver.height())
-            for location in grid_locs.locations:
-                keystone_location = location * Rot(X=-90)
-                keystone_locations.append(keystone_location)
-    extrude(amount=-p.panel_thickness, mode=Mode.SUBTRACT)
+        # keystone receivers
+        for index, joint_location in enumerate(keystone_locations):
+            with BuildPart(mode=Mode.PRIVATE):
+                receiver = KeystoneReceiver()
+            receiver_joint = typing.cast(RigidJoint, receiver.joints["joint"])
+            joint = RigidJoint(f"keystone-{index}", builder.part, joint_location)
+            joint.connect_to(receiver_joint)
+            add(receiver)
+    return builder
 
-    # keystone receivers
-    for index, joint_location in enumerate(keystone_locations):
-        with BuildPart(mode=Mode.PRIVATE):
-            receiver = KeystoneReceiver()
-        receiver_joint = typing.cast(RigidJoint, receiver.joints["joint"])
-        joint = RigidJoint(f"keystone-{index}", builder.part, joint_location)
-        joint.connect_to(receiver_joint)
-        add(receiver)
 
-main(builder)
+main(builder_fn, Parameters())

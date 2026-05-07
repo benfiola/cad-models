@@ -1,16 +1,25 @@
 {
   "configurations": [
     {
-      "name": "keystone_surface_mount.py",
+      "name": "keystone surface mount (exterior wall)",
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "program": "${workspaceFolder}/cad_models/keystone_surface_mount.py",
       "justMyCode": false,
-      "args": ["--ocp"]
+      "args": ["--ocp", "--variant", "interior-wall"]
     },
     {
-      "name": "keystone_patch_panel.py",
+      "name": "keystone surface mount (interior wall)",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/keystone_surface_mount.py",
+      "justMyCode": false,
+      "args": ["--ocp", "--variant", "interior-wall"]
+    },
+    {
+      "name": "keystone patch panel",
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}",
@@ -19,31 +28,40 @@
       "args": ["--ocp"]
     },
     {
-      "name": "oversized_rack_shelf.py",
+      "name": "oversized rack shelf (rb4011)",
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "program": "${workspaceFolder}/cad_models/oversized_rack_shelf.py",
       "justMyCode": false,
-      "args": ["--ocp"]
+      "args": ["--ocp", "--variant", "rb4011"]
     },
     {
-      "name": "rack_bracket.py",
+      "name": "rack bracket (gigaplus)",
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "program": "${workspaceFolder}/cad_models/rack_bracket.py",
       "justMyCode": false,
-      "args": ["--ocp"]
+      "args": ["--ocp", "--variant", "gigaplus"]
     },
     {
-      "name": "rack_shelf.py",
+      "name": "rack shelf (hue bridge)",
       "type": "debugpy",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "program": "${workspaceFolder}/cad_models/rack_shelf.py",
       "justMyCode": false,
-      "args": ["--ocp"]
+      "args": ["--ocp", "--variant", "hue-bridge"]
+    },
+    {
+      "name": "rack shelf (thinkcentre)",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/rack_shelf.py",
+      "justMyCode": false,
+      "args": ["--ocp", "--variant", "thinkcentre"]
     }
   ]
 }
