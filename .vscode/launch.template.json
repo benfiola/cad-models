@@ -1,6 +1,15 @@
 {
   "configurations": [
     {
+      "name": "keystone patch panel",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/keystone_patch_panel.py",
+      "justMyCode": false,
+      "args": ["--ocp"]
+    },
+    {
       "name": "keystone surface mount (exterior wall)",
       "type": "debugpy",
       "request": "launch",
@@ -17,15 +26,6 @@
       "program": "${workspaceFolder}/cad_models/keystone_surface_mount.py",
       "justMyCode": false,
       "args": ["--ocp", "--variant", "interior-wall"]
-    },
-    {
-      "name": "keystone patch panel",
-      "type": "debugpy",
-      "request": "launch",
-      "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/cad_models/keystone_patch_panel.py",
-      "justMyCode": false,
-      "args": ["--ocp"]
     },
     {
       "name": "oversized rack shelf (rb4011)",
@@ -62,6 +62,15 @@
       "program": "${workspaceFolder}/cad_models/rack_shelf.py",
       "justMyCode": false,
       "args": ["--ocp", "--variant", "thinkcentre"]
+    },
+    {
+      "name": "rpi ssd adapter",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/rpi_ssd_adapter.py",
+      "justMyCode": false,
+      "args": ["--ocp"]
     }
   ]
 }
