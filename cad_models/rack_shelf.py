@@ -5,7 +5,6 @@ from cad_models.common import *
 
 class Device:
     p: "Parameters"
-    height: float
     width: float
     depth: float
 
@@ -54,9 +53,9 @@ class Parameters:
 
 class RaspberryPI(Device):
     width = 70 * MM + 1.0 * MM
-    height = 18 * MM
     depth = 100 * MM + 1.0 * MM
 
+    height = 18 * MM
     lip: float = 2 * MM
     fillet_radius: float = 2 * MM
     wall_opening_x: float = 60 * MM
@@ -154,9 +153,9 @@ class RaspberryPI(Device):
 
 class Thinkcentre(Device):
     width = 179 * MM + 1.0 * MM
-    height = 34.5 * MM
     depth = 183 * MM + 1.0 * MM
 
+    height = 34.5 * MM
     foot_width = 16.0 * MM
     foot_height = 7.5 * MM
     foot_depth = 2.5 * MM
@@ -256,8 +255,9 @@ class Thinkcentre(Device):
 
 class HueBridge(Device):
     width = 90 * MM + 1.0 * MM
-    height = 26.5 * MM
     depth = 90 * MM + 1.0 * MM
+
+    height = 26.5 * MM
     outer_fillet_radius = 24 * MM
     tray_lip = 2 * MM
 

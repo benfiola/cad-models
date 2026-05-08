@@ -5,7 +5,6 @@ from cad_models.common import *
 
 class Device:
     p: "Parameters"
-    height: float
     width: float
     depth: float
 
@@ -57,10 +56,10 @@ class Parameters:
 
 
 class RB4011(Device):
-    height = 26 * MM
     width = 227.7 * MM + 1.0 * MM
     depth = 117.7 * MM + 1.0 * MM
 
+    height = 26 * MM
     foot_diameter = 15 * MM
     foot_depth = 3.7 * MM
     foot_spacing_x = 162.2 * MM
