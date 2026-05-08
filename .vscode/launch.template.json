@@ -55,6 +55,24 @@
       "args": ["--ocp", "--variant", "hue-bridge"]
     },
     {
+      "name": "rack shelf (one raspberry pi)",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/rack_shelf.py",
+      "justMyCode": false,
+      "args": ["--ocp", "--variant", "one-raspberry-pi"]
+    },
+    {
+      "name": "rack shelf (two raspberry pis)",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/rack_shelf.py",
+      "justMyCode": false,
+      "args": ["--ocp", "--variant", "two-raspberry-pis"]
+    },
+    {
       "name": "rack shelf (thinkcentre)",
       "type": "debugpy",
       "request": "launch",
@@ -71,6 +89,24 @@
       "program": "${workspaceFolder}/cad_models/rpi_ssd_adapter.py",
       "justMyCode": false,
       "args": ["--ocp"]
+    },
+    {
+      "name": "rack tray test (hue bridge)",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/rack_tray_test.py",
+      "justMyCode": false,
+      "args": ["--ocp", "--variant", "hue-bridge"]
+    },
+    {
+      "name": "rack tray test (raspberry pi)",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/rack_tray_test.py",
+      "justMyCode": false,
+      "args": ["--ocp", "--variant", "raspberry-pi"]
     }
   ]
 }
