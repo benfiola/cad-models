@@ -106,9 +106,9 @@ class HueBridge(Device):
 
 
 class RaspberryPI(Device):
-    width = 70 * MM
+    width = 70 * MM + 1.0 * MM
     height = 18 * MM
-    depth = 100 * MM
+    depth = 100 * MM + 1.0 * MM
 
     lip: float = 2 * MM
     fillet_radius: float = 2 * MM
