@@ -52,10 +52,10 @@ class Parameters:
 
 
 class RaspberryPI(Device):
-    width = 70 * MM + 1.0 * MM
-    depth = 100 * MM + 1.0 * MM
+    width = 70.1 * MM
+    depth = 100.1 * MM
 
-    adapter_height = 12 * MM + 2.0 * MM
+    adapter_height = 15 * MM
     device_height = 34 * MM
     lip: float = 2 * MM
     fillet_radius: float = 2 * MM
@@ -255,8 +255,8 @@ class Thinkcentre(Device):
 
 
 class HueBridge(Device):
-    width = 90 * MM + 1.0 * MM
-    depth = 90 * MM + 1.0 * MM
+    width = 91 * MM
+    depth = 90.7 * MM
 
     height = 26.5 * MM
     outer_fillet_radius = 24 * MM

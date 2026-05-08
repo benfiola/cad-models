@@ -17,14 +17,16 @@ class Parameters:
     standoff_spacing_y: float = 58 * MM
     standoff_offset_y: float = -5.5 * MM
     standoff_diameter: float = 5 * MM
-    standoff_nut_size: str = "M3-0.5-Standard"
+    standoff_nut_size: str = "M3-0.5-H3-D5"
     standoff_nut_depth: float = 3 * MM
 
 
 def builder_fn(p: Parameters):
     with BuildPart(mode=Mode.PRIVATE):
         screw = PanHeadScrew(p.ssd_screw_size, p.adapter_thickness)
-        nut = HeatSetNut(p.standoff_nut_size)
+        nut = HeatSetNut(
+            p.standoff_nut_size, fastener_type=typing.cast(typing.Any, "AE-SamZhihui")
+        )
 
     with BuildPart() as builder:
         # adapter
@@ -49,8 +51,9 @@ def builder_fn(p: Parameters):
         location = Location(plane)
         location *= Pos(Y=p.standoff_offset_y)
         with Locations(location):
+            # NOTE: depth seems to be 'in addition to' nut depth, but also needs to be > 0.
             with GridLocations(p.standoff_spacing_x, p.standoff_spacing_y, 2, 2):
-                InsertHole(nut, depth=p.standoff_nut_depth)
+                InsertHole(nut, depth=0.0001 * MM)
 
         # fillet
         edges = builder.edges().filter_by(Axis.Z)
