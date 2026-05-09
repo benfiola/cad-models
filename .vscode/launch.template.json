@@ -89,24 +89,6 @@
       "program": "${workspaceFolder}/cad_models/rpi_ssd_adapter.py",
       "justMyCode": false,
       "args": ["--ocp"]
-    },
-    {
-      "name": "rack tray test (hue bridge)",
-      "type": "debugpy",
-      "request": "launch",
-      "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/cad_models/rack_tray_test.py",
-      "justMyCode": false,
-      "args": ["--ocp", "--variant", "hue-bridge"]
-    },
-    {
-      "name": "rack tray test (raspberry pi)",
-      "type": "debugpy",
-      "request": "launch",
-      "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/cad_models/rack_tray_test.py",
-      "justMyCode": false,
-      "args": ["--ocp", "--variant", "raspberry-pi"]
     }
   ]
 }

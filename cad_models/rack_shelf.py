@@ -52,10 +52,11 @@ class Parameters:
 
 
 class RaspberryPI(Device):
-    width = 70 * MM + 1.0 * MM
-    depth = 100 * MM + 1.0 * MM
+    width = 70.1 * MM
+    depth = 100.1 * MM
 
-    height = 18 * MM
+    adapter_height: float = 15 * MM
+    device_height: float = 34 * MM
     lip: float = 2 * MM
     fillet_radius: float = 2 * MM
     wall_opening_x: float = 60 * MM
@@ -71,11 +72,11 @@ class RaspberryPI(Device):
 
     @property
     def outer_height(self):
-        return self.height + self.p.mount_thickness
+        return self.adapter_height + self.p.mount_thickness
 
     @property
     def inner_height(self):
-        return self.height + self.lip
+        return self.adapter_height + self.lip
 
     @property
     def grid_width(self):
@@ -91,7 +92,7 @@ class RaspberryPI(Device):
 
     @property
     def panel_opening_height(self):
-        return self.height - self.lip
+        return self.device_height - self.lip
 
     def tray(self) -> Part:
         with BuildPart(mode=Mode.PRIVATE) as builder:
@@ -113,7 +114,7 @@ class RaspberryPI(Device):
             with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
                 Rectangle(self.outer_width, self.wall_opening_y)
                 Rectangle(self.wall_opening_x, self.outer_depth)
-            extrude(amount=-self.height, mode=Mode.SUBTRACT)
+            extrude(amount=-self.adapter_height, mode=Mode.SUBTRACT)
 
             # hex grid
             face = builder.faces().sort_by(Axis.Z).filter_by(Axis.Z)[1]
@@ -254,8 +255,8 @@ class Thinkcentre(Device):
 
 
 class HueBridge(Device):
-    width = 90 * MM + 1.0 * MM
-    depth = 90 * MM + 1.0 * MM
+    width = 91 * MM
+    depth = 90.7 * MM
 
     height = 26.5 * MM
     outer_fillet_radius = 24 * MM
