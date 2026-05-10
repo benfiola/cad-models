@@ -51,7 +51,7 @@ class Parameters:
         return max(d.depth for d in self.devices) + self.mount_thickness
 
 
-class RaspberryPI(Device):
+class RaspberryPi(Device):
     width = 70.1 * MM
     depth = 100.1 * MM
 
@@ -72,11 +72,11 @@ class RaspberryPI(Device):
 
     @property
     def outer_height(self):
-        return self.adapter_height + self.p.mount_thickness
+        return self.adapter_height + (self.p.mount_thickness - self.lip)
 
     @property
     def inner_height(self):
-        return self.adapter_height + self.lip
+        return self.adapter_height
 
     @property
     def grid_width(self):
@@ -93,6 +93,10 @@ class RaspberryPI(Device):
     @property
     def panel_opening_height(self):
         return self.device_height - self.lip
+
+    @property
+    def wall_height(self):
+        return self.adapter_height - self.lip
 
     def tray(self) -> Part:
         with BuildPart(mode=Mode.PRIVATE) as builder:
@@ -114,7 +118,7 @@ class RaspberryPI(Device):
             with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
                 Rectangle(self.outer_width, self.wall_opening_y)
                 Rectangle(self.wall_opening_x, self.outer_depth)
-            extrude(amount=-self.adapter_height, mode=Mode.SUBTRACT)
+            extrude(amount=-self.wall_height, mode=Mode.SUBTRACT)
 
             # hex grid
             face = builder.faces().sort_by(Axis.Z).filter_by(Axis.Z)[1]
@@ -260,7 +264,7 @@ class HueBridge(Device):
 
     height = 26.5 * MM
     outer_fillet_radius = 24 * MM
-    tray_lip = 2 * MM
+    lip = 2 * MM
 
     @property
     def outer_width(self):
@@ -272,11 +276,11 @@ class HueBridge(Device):
 
     @property
     def outer_height(self):
-        return self.height + self.p.mount_thickness
+        return self.height + (self.p.mount_thickness - self.lip)
 
     @property
     def inner_height(self):
-        return self.height + self.tray_lip
+        return self.height
 
     @property
     def inner_fillet_radius(self):
@@ -285,6 +289,10 @@ class HueBridge(Device):
     @property
     def wall_opening(self):
         return self.outer_fillet_radius * 2
+
+    @property
+    def wall_height(self):
+        return self.height - self.lip
 
     @property
     def grid_width(self):
@@ -300,7 +308,7 @@ class HueBridge(Device):
 
     @property
     def panel_opening_height(self):
-        return self.height - self.tray_lip
+        return self.height - self.lip
 
     def tray(self) -> Part:
         with BuildPart(mode=Mode.PRIVATE) as builder:
@@ -322,7 +330,7 @@ class HueBridge(Device):
             with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
                 Rectangle(self.outer_width, self.wall_opening)
                 Rectangle(self.wall_opening, self.outer_depth)
-            extrude(amount=-self.height, mode=Mode.SUBTRACT)
+            extrude(amount=-self.wall_height, mode=Mode.SUBTRACT)
 
             # hex grid
             face = builder.faces().sort_by(Axis.Z).filter_by(Axis.Z)[1]
@@ -451,7 +459,7 @@ main(
     {
         "hue-bridge": Parameters(devices=[HueBridge()]),
         "thinkcentre": Parameters(devices=[Thinkcentre()]),
-        "one-raspberry-pi": Parameters(devices=[RaspberryPI()]),
-        "two-raspberry-pis": Parameters(devices=[RaspberryPI(), RaspberryPI()]),
+        "one-raspberry-pi": Parameters(devices=[RaspberryPi()]),
+        "two-raspberry-pis": Parameters(devices=[RaspberryPi(), RaspberryPi()]),
     },
 )
