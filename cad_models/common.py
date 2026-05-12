@@ -76,6 +76,9 @@ def hex_grid(width: float, height: float, radius: float, spacing: float) -> Sket
         actual_spacing = radius + (spacing / 2)
         count_x = int((width - radius) / (math.sqrt(3) * actual_spacing))
         count_y = int((height - radius) / (2 * actual_spacing))
+        if limit_hex_grid:
+            count_x = min(count_x, 5)
+            count_y = min(count_y, 5)
         with HexLocations(actual_spacing, count_x, count_y, major_radius=False):
             RegularPolygon(radius, 6, major_radius=False)
     return builder.sketch
@@ -84,6 +87,7 @@ def hex_grid(width: float, height: float, radius: float, spacing: float) -> Sket
 @dataclass
 class MainArgs:
     export: pathlib.Path | None
+    limit_hex_grid: bool
     ocp: bool
     variant: str
 
@@ -95,10 +99,15 @@ class BuildPartFn(typing.Protocol, typing.Generic[TParameter]):
     def __call__(self, p: TParameter) -> BuildPart: ...
 
 
+limit_hex_grid: bool
+
+
 def main(
     build_part_fns: BuildPartFn[TParameter] | list[BuildPartFn[TParameter]],
     variants: dict[str, TParameter] | TParameter,
 ):
+    global limit_hex_grid
+
     if not isinstance(build_part_fns, list):
         build_part_fns = [build_part_fns]
     if not isinstance(variants, dict):
@@ -106,6 +115,7 @@ def main(
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--export", type=pathlib.Path, default=None)
+    parser.add_argument("--limit-hex-grid", default=False, action="store_true")
     parser.add_argument("--ocp", default=False, action="store_true")
     parser.add_argument("--variant", default="default", choices=variants.keys())
     args = MainArgs(**vars(parser.parse_args()))
@@ -113,6 +123,8 @@ def main(
     parameters = variants.get(args.variant)
     if not parameters:
         raise ValueError(f"invalid variant: {args.variant}")
+
+    limit_hex_grid = args.limit_hex_grid
 
     parts = []
     for build_part_fn in build_part_fns:

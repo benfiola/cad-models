@@ -27,7 +27,7 @@ class Parameters:
     mount_height: float = 1 * U
     mount_thickness: float = 5 * MM
     mount_lip: float = 2 * MM
-    oversize_taper_offset: float = 10 * MM
+    oversize_taper_offset: float = 8 * MM
     oversize_taper_length: float = 10 * MM
     rack_width: float = 222 * MM
 
@@ -48,7 +48,7 @@ class Parameters:
 
     @property
     def tray_depth(self):
-        return self.device.depth + self.mount_thickness
+        return self.device.depth - self.mount_thickness
 
     @property
     def taper_width(self):
@@ -56,10 +56,9 @@ class Parameters:
 
 
 class RB4011(Device):
-    width = 227.7 * MM + 1.0 * MM
-    depth = 117.7 * MM + 1.0 * MM
-
-    height = 26 * MM
+    device_width = 227.7 * MM + 1.0 * MM
+    device_depth = 117.7 * MM + 1.0 * MM
+    device_height = 26 * MM
     foot_diameter = 15 * MM
     foot_depth = 3.7 * MM
     foot_spacing_x = 162.2 * MM
@@ -70,12 +69,16 @@ class RB4011(Device):
     panel_lip = 2 * MM
 
     @property
-    def outer_width(self):
-        return self.width + (self.p.mount_thickness * 2)
+    def width(self):
+        return self.device_width + (self.p.mount_thickness * 2)
 
     @property
-    def outer_depth(self):
-        return self.depth + (self.p.mount_thickness * 2)
+    def depth(self):
+        return (
+            self.device_depth
+            + self.p.oversize_taper_offset
+            + (self.p.mount_thickness * 2)
+        )
 
     @property
     def foot_outer_diameter(self):
@@ -87,19 +90,22 @@ class RB4011(Device):
 
     @property
     def panel_opening_height(self):
-        return self.height - self.panel_lip
+        return self.device_height - self.panel_lip
 
     def tray(self) -> Part:
         with BuildPart(mode=Mode.PRIVATE) as builder:
             # outer tray
             with BuildSketch():
-                Rectangle(self.outer_width, self.outer_depth)
+                Rectangle(self.width, self.depth)
             extrude(amount=self.p.mount_thickness)
 
             # inner tray
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
             with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
-                Rectangle(self.width, self.depth)
+                location = Location((0, 0))
+                location *= Pos(Y=self.p.oversize_taper_offset / 2)
+                with Locations(location):
+                    Rectangle(self.device_width, self.device_depth)
             extrude(amount=-self.tray_lip, mode=Mode.SUBTRACT)
 
             # hex grid
@@ -107,7 +113,10 @@ class RB4011(Device):
             with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
                 add(
                     hex_grid(
-                        self.width, self.depth, self.p.hex_radius, self.p.hex_spacing
+                        self.device_width,
+                        self.device_depth,
+                        self.p.hex_radius,
+                        self.p.hex_spacing,
                     )
                 )
             extrude(amount=-self.p.mount_thickness, mode=Mode.SUBTRACT)
@@ -221,7 +230,6 @@ def builder_fn(p: Parameters):
         # oversize tray cutouts
         face = builder.faces().filter_by(Axis.X).sort_by(Axis.X)[1]
         mirror_plane = Plane(face.offset(-p.tray_width / 2))
-        test = Plane(face.offset(-p.tray_width))
         face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
         edge = face.edges().filter_by(Axis.Y).sort_by(Axis.X)[1]
         location = edge.location_at(1.0)
