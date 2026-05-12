@@ -27,7 +27,7 @@ class Parameters:
     mount_height: float = 1 * U
     mount_thickness: float = 5 * MM
     mount_lip: float = 2 * MM
-    oversize_taper_offset: float = 8 * MM
+    oversize_taper_offset: float = 7.5 * MM
     oversize_taper_length: float = 10 * MM
     rack_width: float = 222 * MM
 
