@@ -48,14 +48,13 @@ class Parameters:
 
     @property
     def tray_depth(self):
-        return max(d.depth for d in self.devices) + self.mount_thickness
+        return max(d.depth for d in self.devices) - self.mount_thickness
 
 
 class RaspberryPi(Device):
-    width = 70.1 * MM
-    depth = 100.1 * MM
-
     adapter_height: float = 15 * MM
+    device_width = 70.1 * MM
+    device_depth = 100.1 * MM
     device_height: float = 34 * MM
     lip: float = 2 * MM
     fillet_radius: float = 2 * MM
@@ -63,28 +62,24 @@ class RaspberryPi(Device):
     wall_opening_y: float = 90 * MM
 
     @property
-    def outer_width(self):
-        return self.width + (self.p.mount_thickness * 2)
+    def width(self):
+        return self.device_width + (self.p.mount_thickness * 2)
 
     @property
-    def outer_depth(self):
-        return self.depth + (self.p.mount_thickness * 2)
+    def depth(self):
+        return self.device_depth + (self.p.mount_thickness * 2)
 
     @property
-    def outer_height(self):
+    def height(self):
         return self.adapter_height + (self.p.mount_thickness - self.lip)
 
     @property
-    def inner_height(self):
-        return self.adapter_height
-
-    @property
     def grid_width(self):
-        return self.width - (self.fillet_radius / 2)
+        return self.device_width - (self.fillet_radius / 2)
 
     @property
     def grid_height(self):
-        return self.depth - (self.fillet_radius / 2)
+        return self.device_depth - (self.fillet_radius / 2)
 
     @property
     def panel_opening_width(self):
@@ -102,22 +97,22 @@ class RaspberryPi(Device):
         with BuildPart(mode=Mode.PRIVATE) as builder:
             # outer tray
             with BuildSketch() as sketch:
-                Rectangle(self.outer_width, self.outer_depth)
+                Rectangle(self.width, self.depth)
                 fillet(sketch.vertices(), radius=self.fillet_radius)
-            extrude(amount=self.outer_height)
+            extrude(amount=self.height)
 
             # inner tray
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
             with BuildSketch(Plane(face, x_dir=(1, 0, 0))) as sketch:
-                Rectangle(self.width, self.depth)
+                Rectangle(self.device_width, self.device_depth)
                 fillet(sketch.vertices(), radius=self.fillet_radius)
-            extrude(amount=-self.inner_height, mode=Mode.SUBTRACT)
+            extrude(amount=-self.adapter_height, mode=Mode.SUBTRACT)
 
             # wall openings
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
             with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
-                Rectangle(self.outer_width, self.wall_opening_y)
-                Rectangle(self.wall_opening_x, self.outer_depth)
+                Rectangle(self.width, self.wall_opening_y)
+                Rectangle(self.wall_opening_x, self.depth)
             extrude(amount=-self.wall_height, mode=Mode.SUBTRACT)
 
             # hex grid
@@ -157,10 +152,9 @@ class RaspberryPi(Device):
 
 
 class Thinkcentre(Device):
-    width = 179 * MM + 1.0 * MM
-    depth = 183 * MM + 1.0 * MM
-
-    height = 34.5 * MM
+    device_width = 179 * MM + 1.0 * MM
+    device_depth = 183 * MM + 1.0 * MM
+    device_height = 34.5 * MM
     foot_width = 16.0 * MM
     foot_height = 7.5 * MM
     foot_depth = 2.5 * MM
@@ -179,20 +173,20 @@ class Thinkcentre(Device):
         return self.foot_height + self.tray_lip
 
     @property
-    def outer_width(self):
-        return self.width + (self.p.mount_thickness * 2)
+    def width(self):
+        return self.device_width + (self.p.mount_thickness * 2)
 
     @property
-    def outer_depth(self):
-        return self.depth + (self.p.mount_thickness * 2)
+    def depth(self):
+        return self.device_depth + (self.p.mount_thickness * 2)
 
     @property
     def panel_opening_height(self):
-        return self.height - self.panel_lip
+        return self.device_height - self.panel_lip
 
     @property
     def panel_opening_width(self):
-        return self.width - (self.panel_lip * 2)
+        return self.device_width - (self.panel_lip * 2)
 
     @property
     def tray_inner_thickness(self):
@@ -202,13 +196,13 @@ class Thinkcentre(Device):
         with BuildPart(mode=Mode.PRIVATE) as builder:
             # outer tray
             with BuildSketch():
-                Rectangle(self.outer_width, self.outer_depth)
+                Rectangle(self.width, self.depth)
             extrude(amount=self.p.mount_thickness)
 
             # inner tray
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
             with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
-                Rectangle(self.width, self.depth)
+                Rectangle(self.device_width, self.device_depth)
             extrude(amount=-self.tray_lip, mode=Mode.SUBTRACT)
 
             # hex grid
@@ -216,7 +210,10 @@ class Thinkcentre(Device):
             with BuildSketch(Plane(face, x_dir=(1, 0, 0))):
                 add(
                     hex_grid(
-                        self.width, self.depth, self.p.hex_radius, self.p.hex_spacing
+                        self.device_width,
+                        self.device_depth,
+                        self.p.hex_radius,
+                        self.p.hex_spacing,
                     )
                 )
             extrude(amount=-self.p.mount_thickness, mode=Mode.SUBTRACT)
@@ -259,28 +256,23 @@ class Thinkcentre(Device):
 
 
 class HueBridge(Device):
-    width = 91 * MM
-    depth = 90.7 * MM
-
-    height = 26.5 * MM
+    device_width = 91 * MM
+    device_depth = 90.7 * MM
+    device_height = 26.5 * MM
     outer_fillet_radius = 24 * MM
     lip = 2 * MM
 
     @property
-    def outer_width(self):
-        return self.width + (self.p.mount_thickness * 2)
+    def width(self):
+        return self.device_width + (self.p.mount_thickness * 2)
 
     @property
-    def outer_depth(self):
-        return self.depth + (self.p.mount_thickness * 2)
+    def depth(self):
+        return self.device_depth + (self.p.mount_thickness * 2)
 
     @property
-    def outer_height(self):
-        return self.height + (self.p.mount_thickness - self.lip)
-
-    @property
-    def inner_height(self):
-        return self.height
+    def height(self):
+        return self.device_height + (self.p.mount_thickness - self.lip)
 
     @property
     def inner_fillet_radius(self):
@@ -292,15 +284,15 @@ class HueBridge(Device):
 
     @property
     def wall_height(self):
-        return self.height - self.lip
+        return self.device_height - self.lip
 
     @property
     def grid_width(self):
-        return self.width - (self.inner_fillet_radius / 2)
+        return self.device_width - (self.inner_fillet_radius / 2)
 
     @property
     def grid_height(self):
-        return self.depth - (self.inner_fillet_radius / 2)
+        return self.device_depth - (self.inner_fillet_radius / 2)
 
     @property
     def panel_opening_width(self):
@@ -308,28 +300,28 @@ class HueBridge(Device):
 
     @property
     def panel_opening_height(self):
-        return self.height - self.lip
+        return self.device_height - self.lip
 
     def tray(self) -> Part:
         with BuildPart(mode=Mode.PRIVATE) as builder:
             # outer tray
             with BuildSketch() as sketch:
-                Rectangle(self.outer_width, self.outer_depth)
+                Rectangle(self.width, self.depth)
                 fillet(sketch.vertices(), radius=self.outer_fillet_radius)
-            extrude(amount=self.outer_height)
+            extrude(amount=self.height)
 
             # inner tray
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
             with BuildSketch(Plane(face, x_dir=(1, 0, 0))) as sketch:
-                Rectangle(self.width, self.depth)
+                Rectangle(self.device_width, self.device_depth)
                 fillet(sketch.vertices(), radius=self.inner_fillet_radius)
-            extrude(amount=-self.inner_height, mode=Mode.SUBTRACT)
+            extrude(amount=-self.device_height, mode=Mode.SUBTRACT)
 
             # wall openings
             face = builder.faces().filter_by(Axis.Z).sort_by(Axis.Z)[-1]
             with BuildSketch(Plane(face.without_holes(), x_dir=(1, 0, 0))):
-                Rectangle(self.outer_width, self.wall_opening)
-                Rectangle(self.wall_opening, self.outer_depth)
+                Rectangle(self.width, self.wall_opening)
+                Rectangle(self.wall_opening, self.depth)
             extrude(amount=-self.wall_height, mode=Mode.SUBTRACT)
 
             # hex grid
