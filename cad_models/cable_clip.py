@@ -67,9 +67,7 @@ def builder_fn(p: Parameters):
 main(
     builder_fn,
     {
-        "2-cable": Parameters(
-            clip_height=2 * ethernet_cable_thickness, two_sided=False
-        ),
+        "2-cable": Parameters(clip_height=2 * ethernet_cable_thickness),
         "3-cable": Parameters(clip_height=3 * ethernet_cable_thickness),
         "4-cable": Parameters(clip_height=4 * ethernet_cable_thickness),
     },

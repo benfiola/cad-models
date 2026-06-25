@@ -8,6 +8,3 @@ dependencies=[
     "ocp_vscode",
     "xmltodict"
 ]
-
-[project.scripts]
-cad-models = "cad_models.cli:main"
