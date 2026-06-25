@@ -1,6 +1,33 @@
 {
   "configurations": [
     {
+      "name": "cable clip (2-cable)",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/cable_clip.py",
+      "justMyCode": false,
+      "args": ["--ocp", "--variant", "2-cable"]
+    },
+    {
+      "name": "cable clip (3-cable)",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/cable_clip.py",
+      "justMyCode": false,
+      "args": ["--ocp", "--variant", "3-cable"]
+    },
+    {
+      "name": "cable clip (4-cable)",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/cable_clip.py",
+      "justMyCode": false,
+      "args": ["--ocp", "--variant", "4-cable"]
+    },
+    {
       "name": "keystone patch panel",
       "type": "debugpy",
       "request": "launch",
