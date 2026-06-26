@@ -14,10 +14,10 @@ class Parameters:
     mount_width: float = 48 * MM
     doorbell_peg_depth: float = 1.4 * MM
     doorbell_peg_spacing_x: float = 30 * MM
-    doorbell_screw_diameter: float = 1.25 * MM
+    doorbell_screw_diameter: float = 2 * MM
     doorbell_screw_spacing_y: float = 75 * MM
     wall_screw_thread_diameter: float = 4.1 * MM
-    wall_screw_head_diameter: float = 7.0 * MM
+    wall_screw_head_diameter: float = 8.0 * MM
     wall_slot_outer_height: float = 18 * MM
     wall_slot_outer_depth: float = 5 * MM
     wall_slot_spacing_y: float = 104 * MM
