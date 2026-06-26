@@ -109,6 +109,15 @@
       "args": ["--ocp", "--variant", "thinkcentre"]
     },
     {
+      "name": "reolink doorbell mount",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cad_models/reolink_doorbell_mount.py",
+      "justMyCode": false,
+      "args": ["--ocp"]
+    },
+    {
       "name": "rpi ssd adapter",
       "type": "debugpy",
       "request": "launch",
