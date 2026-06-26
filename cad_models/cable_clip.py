@@ -2,7 +2,7 @@ from bd_warehouse.fastener import *
 from build123d import *
 from common import *
 
-ethernet_cable_thickness = 6 * MM
+ethernet_cable_thickness = 6.5 * MM
 
 
 @dataclass
@@ -11,7 +11,7 @@ class Parameters:
     clip_width: float = 8 * MM
     clip_depth: float = ethernet_cable_thickness
     clip_tab_height: float = 8 * MM
-    clip_thickness: float = 2 * MM
+    clip_thickness: float = 3 * MM
     fillet_radius: float = 2 * MM
     screw_diameter: float = 4 * MM
     screw_head_diameter: float = 6.75 * MM
@@ -67,6 +67,7 @@ def builder_fn(p: Parameters):
 main(
     builder_fn,
     {
+        "1-cable": Parameters(clip_height=1 * ethernet_cable_thickness),
         "2-cable": Parameters(clip_height=2 * ethernet_cable_thickness),
         "3-cable": Parameters(clip_height=3 * ethernet_cable_thickness),
         "4-cable": Parameters(clip_height=4 * ethernet_cable_thickness),
